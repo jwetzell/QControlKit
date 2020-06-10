@@ -81,7 +81,7 @@ namespace QSharp
             get { 
                 // /update/workspace/{workspace_id}/cueList/{cue_list_id}/playbackPosition {cue_id}
                 string[] parts = AddressParts;
-                return (parts.Length == 6 && address.EndsWith("/playbakPosition"));
+                return (parts.Length == 6 && address.EndsWith("/playbackPosition"));
             } 
         }
 
