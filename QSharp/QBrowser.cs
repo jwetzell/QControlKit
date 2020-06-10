@@ -6,49 +6,50 @@ namespace QSharp
 {
     public class QBrowser
     {
-        const string UDPServiceType = "_qlab._udp.local."; 
-        const string TCPServiceType = "_qlab._tcp.local.";
 
-        const int udpPort = 53000;
+        ZeroconfResolver.ResolverListener zeroconfTCPBrowser;
 
-        IObservable<IZeroconfHost> netServices;
-        ZeroconfResolver.ResolverListener netServiceTCPBrowser;
+        public ObservableCollection<QServer> servers = new ObservableCollection<QServer>();
 
-        ObservableCollection<QServer> servers = new ObservableCollection<QServer>();
+        public event QServerFoundHandler ServerFound;
+
 
         public QBrowser()
         {
 
             Console.WriteLine("QBrowser Init");
-            netServiceTCPBrowser = ZeroconfResolver.CreateListener(TCPServiceType);
-            netServiceTCPBrowser.ServiceFound += ServerFound;
-            netServiceTCPBrowser.ServiceLost += ServerLost;
+            zeroconfTCPBrowser = ZeroconfResolver.CreateListener(QBonjour.TCPService);
+            zeroconfTCPBrowser.ServiceFound += ZeroconfHostFound;
+            zeroconfTCPBrowser.ServiceLost += ZeroconfHostLost;
         }
 
-        private void ServerLost(object sender, IZeroconfHost e)
+        private void ZeroconfHostLost(object sender, IZeroconfHost e)
         {
             Console.WriteLine($"Lost {e.DisplayName} : {e.IPAddress}");
 
         }
 
-        private void ServerFound(object sender, IZeroconfHost e)
+        private void ZeroconfHostFound(object sender, IZeroconfHost e)
         {
             
             
             foreach(var service in e.Services)
             {
-                if (service.Key.Equals(TCPServiceType))
+                if (service.Key.Equals(QBonjour.TCPService))
                 {
                     Console.WriteLine($"Found {e.DisplayName} : {e.IPAddress} : {service.Value.Port}");
 
-                    QServer server = getServerFromAddress(e.IPAddress);
+                    QServer server = serverForAddress(e.IPAddress);
 
                     if(server == null)
                     {
                         Console.WriteLine("New Server Found so adding");
-                        QServer serverToAdd = new QServer(e.IPAddress, service.Value.Port, e.DisplayName);
+                        QServer serverToAdd = new QServer(e.IPAddress, service.Value.Port);
+                        serverToAdd.name = e.DisplayName;
+                        serverToAdd.zeroconfHost = e;
                         servers.Add(serverToAdd);
                         serverToAdd.refreshWorkspaces();
+                        OnServerFound(serverToAdd);
                     }
                     else
                     {
@@ -60,9 +61,8 @@ namespace QSharp
 
         }
 
-        public QServer getServerFromAddress(string address)
+        public QServer serverForAddress(string address)
         {
-            QServer foundServer = null;
             foreach(var server in servers)
             {
                 if (server.host.Equals(address))
@@ -71,7 +71,27 @@ namespace QSharp
                 }
             }
 
-            return foundServer;
+            return null;
+        }
+
+        public QServer serverForIZeroconfHost(IZeroconfHost zeroconfHost)
+        {
+            foreach (var server in servers)
+            {
+                if (server.zeroconfHost == zeroconfHost)
+                {
+                    return server;
+                }
+            }
+
+            return null;
+        }
+
+        protected virtual void OnServerFound(QServer server)
+        {
+            if (ServerFound != null)
+                ServerFound(this, new QServerFoundArgs { server = server });
+
         }
     }
 }

@@ -46,12 +46,22 @@ namespace SharpOSC
             _address = address;
         }
 
-        public void Connect()
+        public bool Connect()
         {
-            client = new TcpClient(Address, Port);
-            Console.WriteLine($"TCPClient - connect called for <{Address}:{Port}>");
-            Thread receivingThread = new Thread(ReceiveLoop);
-            receivingThread.Start();
+            try
+            {
+                client = new TcpClient(Address, Port);
+                Thread receivingThread = new Thread(ReceiveLoop);
+                receivingThread.Start();
+                //Console.WriteLine($"TCPClient - connected to <{Address}:{Port}>");
+                return true;
+            } 
+            catch (Exception e)
+            {
+                //Console.WriteLine(e.Message);
+                return false;
+            }
+            
         }
 
         public void Send(byte[] message)
@@ -65,6 +75,14 @@ namespace SharpOSC
         {
             byte[] data = packet.GetBytes();
             Send(data);
+        }
+
+        public bool IsConnected
+        {
+            get
+            {
+                return client.Connected;
+            }
         }
 
         public void ReceiveLoop()
@@ -109,7 +127,7 @@ namespace SharpOSC
                 }
             } catch(Exception e)
             {
-                //Log.Debug("TCPSENDER - Receive Exception: " + e.ToString());
+                //Console.WriteLine("TCPSENDER - Receive Exception: " + e.ToString());
             }
         }
 

@@ -1,4 +1,9 @@
 ﻿//TODO: connect methods, cue property fetch methods, everything else
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Timers;
+
 namespace QSharp
 {
     public class QWorkspace
@@ -7,11 +12,20 @@ namespace QSharp
         private QServer server;
         private QClient client;
 
-        private string name;
-        private string uniqueID;
-        private bool connected;
+        public string name;
+        public string uniqueID;
+        public bool connected;
         private bool hasPasscode;
-        private string oscPrefix;
+        private string passcode;
+
+        private QCue root;
+
+        private Timer heartbeatTimer;
+        private int heartbeatAttempts;
+
+        public bool defaultSendUpdatesOSC;
+
+        public string version;
 
         private void Init()
         {
@@ -20,26 +34,42 @@ namespace QSharp
             connected = false;
 
             hasPasscode = false;
+            defaultSendUpdatesOSC = false;
+
+            root = new QCue(this);
+            root.setProperty(QIdentifiers.RootCue, QOSCKey.UID, false);
+            root.setProperty("Cue Lists", QOSCKey.Name, false);
+            root.setProperty(QCueType.CueList, QOSCKey.Type, false);
 
             //TODO: add version 
+            version = "3.0.0";
+
         }
 
         public QWorkspace(QWorkspaceInfo workspaceInfo, QServer server)
         {
-            if(workspaceInfo.uniqueID.Length > 0)
-            {
-                uniqueID = workspaceInfo.uniqueID;
-                oscPrefix = workspacePrefix();
-            }
+            Init();
 
-            //TODO add version if it has one if no version then it is QLab 3?
+            if(workspaceInfo.uniqueID.Length > 0)
+                uniqueID = workspaceInfo.uniqueID;
+
+            if (workspaceInfo.version.Length > 0)
+                version = workspaceInfo.version;
+
             updateWithWorkspaceInfo(workspaceInfo);
 
             client = new QClient(server.host, server.port);
-            this.server = server;
+            
+            client.WorkspaceConnected += OnWorkspaceConnection;
+            client.WorkspaceConnectionError += OnWorkspaceConnectionError;
+            client.WorkspaceDisconnected += OnWorkspaceDisconnected;
+            client.CueListsUpdated += OnCueListsUpdated;
 
+            this.server = server;
+            Console.WriteLine($"[workspace] <{name}> initizalied for server: {server.name} ");
         }
 
+        //updateWithDictionary
         public bool updateWithWorkspaceInfo(QWorkspaceInfo workspaceInfo) {
             bool didUpdate = false;
             if(workspaceInfo.displayName.Length > 0 && !workspaceInfo.displayName.Equals(this.name))
@@ -55,61 +85,315 @@ namespace QSharp
             return didUpdate;
         }
 
-        
+        public string description { get { return $"{name} : {uniqueID}"; } }
 
-        
+        public string nameWithoutPathExtension { get { return name;  } } //TODO
 
-        public string getUniqueID()
+        public string serverName { get { return server.name; } }
+
+        public string fullName { get { return $"{name} ({server.name})"; } }
+
+        public QCue firstCue { get { return firstCueList.firstCue; } }
+        public QCue firstCueList { get { return root.firstCue; } }
+        public string fullNameWithCueList(QCue cueList) { return ""; }
+        //TODO other convenience methods
+
+        public bool connectedToQLab3 { get { return false; } } //TODO implement the version system
+
+        #region Connection/reconnection
+
+        public void connectWithPasscode(string passcode)
         {
-            return uniqueID;
+            //TODO
+
+            if (!client.connect())
+            {
+                System.Console.WriteLine($"[workspace] *** Error: couldn't connect to server");
+                return;
+            }
+
+            System.Console.WriteLine("[workspace] connecting...");
+            client.sendMessage($"{workspacePrefix}/connect",passcode);
+
         }
 
-        #region OSC address helpers
-        private string addressForCue(QCue cue, string action)
+        private void finishConnection()
         {
-            return $"{oscPrefix}/cue_id/{cue.propertyForKey("uniqueId")}/{action}";
+            //TODO
+            System.Console.WriteLine($"[workspace] connected to <{name}> running on QLab version <{version}>");
+            connected = true;
+            startReceivingUpdates();
+            //fetchQLabVersion();
+            fetchCueLists();
+
         }
 
-        private string addressForWildcardNumber(string number, string action) {
-            return $"{oscPrefix}/cue/{number}/{action}";
+        public void reconnect()
+        {
+            if (connected)
+                return;
+            connectWithPasscode(passcode);
+
+            //todo
         }
 
-        private string workspacePrefix()
+        public void disconnect()
         {
-            return $"/workspace/{uniqueID}";
+            //TODO
+            Console.WriteLine($"[workspace] disconnect: {name}");
+            stopHeartbeat();
+            stopReceivingUpdates();
+            disconnectFromWorkspace();
+
+            connected = false;
+
+            client.disconnect();
+            //root.removeAllChildCues();
+
+        }
+
+        public void temporarilyDisconnect()
+        {
+            //TODO
+        }
+
+        #endregion  
+
+        #region Cues
+        public QCue cueWithId(string uid)
+        {
+            return root.cueWithID(uid);
+        }
+
+        public QCue cueWithNumber(string number)
+        {
+            return root.cueWithNumber(number);
         }
         #endregion
 
         #region Workspace Methods
-        public void disconnectFromWorkspace() { client.sendMessage($"{oscPrefix}/disconnect"); }
-        public void startReceivingUpdates() { client.sendMessage($"{oscPrefix}/updates", 1); }
-        public void stopReceivingUpdates() { client.sendMessage($"{oscPrefix}/updates", 0); }
-        public void enableAlwaysReply() { client.sendMessage($"{oscPrefix}/alwaysReply", 1); }
-        public void disableAlwaysReply() { client.sendMessage($"{oscPrefix}/alwaysReply", 0); }
+        public void disconnectFromWorkspace() { client.sendMessage($"{workspacePrefix}/disconnect"); }
+        public void startReceivingUpdates() { client.sendMessage($"{workspacePrefix}/updates", 1); }
+        public void stopReceivingUpdates() { client.sendMessage($"{workspacePrefix}/updates", 0); }
+        public void enableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 1); }
+        public void disableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 0); }
+        public void fetchQLabVersion() { client.sendMessage($"{workspacePrefix}/version"); } //TODO: EventHandler for this
+        public void fetchCueLists() { client.sendMessage($"{workspacePrefix}/cueLists"); } //TODO: EventHandler for CueListUpdated
+        public void fetchPlaybackPositionForCue(QCue cue) { client.sendMessage(addressForCue(cue, QOSCKey.PlaybackPositionId)); } //EventHandler for this? can I use the CueListPlaybackPosition one?
+        public void go() { client.sendMessage($"{workspacePrefix}/go"); }
+        public void save() { client.sendMessage($"{workspacePrefix}/save"); }
+        public void undo() { client.sendMessage($"{workspacePrefix}/undo"); }
+        public void redo() { client.sendMessage($"{workspacePrefix}/redo"); }
+        public void resetAll() { client.sendMessage($"{workspacePrefix}/reset"); }
+        public void pauseAll() { client.sendMessage($"{workspacePrefix}/pause"); }
+        public void resumeAll() { client.sendMessage($"{workspacePrefix}/resume"); }
+        public void stopAll() { client.sendMessage($"{workspacePrefix}/stop"); }
+        public void panicAll() { client.sendMessage($"{workspacePrefix}/panic"); }
+        #endregion
 
-        public void fetchQLabVersion() {
+        #region Heartbeat
+        //TODO
+        public void startHeartbeat()
+        {
+            clearHeartbeatTimeout();
+            sendHeartbeat();
+        }
+
+        public void stopHeartbeat()
+        {
+            clearHeartbeatTimeout();
+            heartbeatAttempts = -1;
+        }
+
+        public void clearHeartbeatTimeout()
+        {
+            heartbeatTimer.Stop();
+            heartbeatTimer = null;
+            heartbeatAttempts = 0;
             //TODO
         }
 
-        public void fetchCueLists()
+        public void sendHeartbeat()
+        {
+            client.sendMessage("/thump");
+            //TODO
+        }
+
+        public void heartbeatTimeout(object sender, ElapsedEventArgs e)
         {
             //TODO
         }
 
-        public void fetchPlaybackPositionForCue()
+
+
+        #endregion
+
+        #region Cue Actions
+        public void startCue(QCue cue) { client.sendMessage(addressForCue(cue, "start")); }
+        public void stopCue(QCue cue) { client.sendMessage(addressForCue(cue, "stop")); }
+        public void pauseCue(QCue cue) { client.sendMessage(addressForCue(cue, "pause")); } //TODO: immediately update local for snappier whatever 
+        public void loadCue(QCue cue) { client.sendMessage(addressForCue(cue, "load")); }
+        public void resetCue(QCue cue) { client.sendMessage(addressForCue(cue, "reset")); }
+        public void deleteCue(QCue cue) { client.sendMessage(addressForCue(cue, "")); }
+        public void resumeCue(QCue cue) { client.sendMessage(addressForCue(cue, "resume")); }
+        public void hardStopCue(QCue cue) { client.sendMessage(addressForCue(cue, "hardStop")); }
+        public void hardPauseCue(QCue cue) { client.sendMessage(addressForCue(cue, "hardPause")); } //TODO: immediately update local for snappier whatever 
+        public void togglePauseCue(QCue cue) { client.sendMessage(addressForCue(cue, "togglePause")); }
+        public void previewCue(QCue cue) { client.sendMessage(addressForCue(cue, "preview")); }
+        public void panicCue(QCue cue) { client.sendMessage(addressForCue(cue, "panic")); } //TODO: immediately update local for snappier whatever 
+        #endregion
+
+        #region Cue Getters/Setters
+        //TODO
+        #endregion
+
+        #region Property Fetching
+        //TODO
+        #endregion
+
+        #region OSC address helpers
+        public void sendMessage(string address, params object[] args)
         {
-            //TODO
+            //check for workspace prefix?
+            client.sendMessage(address, args);
         }
 
-        public void go() { client.sendMessage($"{oscPrefix}/go"); }
-        public void save() { client.sendMessage($"{oscPrefix}/save"); }
-        public void undo() { client.sendMessage($"{oscPrefix}/undo"); }
-        public void redo() { client.sendMessage($"{oscPrefix}/redo"); }
-        public void resetAll() { client.sendMessage($"{oscPrefix}/reset"); }
-        public void pauseAll() { client.sendMessage($"{oscPrefix}/pause"); }
-        public void resumeAll() { client.sendMessage($"{oscPrefix}/resume"); }
-        public void stopAll() { client.sendMessage($"{oscPrefix}/stop"); }
-        public void panicAll() { client.sendMessage($"{oscPrefix}/panic"); }
+        private string addressForCue(QCue cue, string action)
+        {
+            return $"{workspacePrefix}/cue_id/{cue.propertyForKey("uniqueId")}/{action}";
+        }
+
+        private string addressForWildcardNumber(string number, string action) {
+            return $"{workspacePrefix}/cue/{number}/{action}";
+        }
+
+        private string workspacePrefix
+        {
+            get { return $"/workspace/{uniqueID}";  }
+            
+        }
+        #endregion
+
+        public string workspaceID
+        {
+            get
+            {
+                return uniqueID;
+            }
+        }
+
+        #region Event Handling
+        private void OnWorkspaceConnectionError(object source, QWorkspaceConnectionErrorArgs args)
+        {
+            if (args.status.Equals("badpass"))
+                Console.WriteLine($"[workspace] *** Error: Password for workspace {name} was incorrect!");
+            else
+                Console.WriteLine($"[workspace] *** Error: Unable to connect to workspace: {name} on server: {server.name}");
+
+        }
+
+        private void OnWorkspaceConnection(object source, QWorkspaceConnectedArgs args)
+        {
+            finishConnection();
+            Console.WriteLine($"[workspace] Connection finished this is the first cue in this workspace {root.firstCue.displayName}");
+        }
+
+        private void OnWorkspaceDisconnected(object source, QWorkspaceDisconnectedArgs args)
+        {
+            //this might not be called with TCP?
+            Console.WriteLine($"[workspace] *** Workspace has indicated it is disconnecting");
+        }
+
+        private void OnCueListsUpdated(object source, QCueListsUpdatedArgs args)
+        {
+            bool rootCueUpdated = false;
+            List<QCue> currentCueLists = new List<QCue>(args.data.Count());
+            int index = 0;
+
+            foreach (var aCueList in args.data)
+            {
+                string uid = aCueList[QOSCKey.UID].ToString();
+                if (uid == null)
+                    continue;
+                QCue cueList = root.cueWithID(uid, false);
+
+                if(cueList != null)
+                {
+                    if(cueList.sortIndex != index)
+                    {
+                        cueList.sortIndex = index;
+                        rootCueUpdated = true;
+                    }
+                    
+                }
+                else
+                {
+                    cueList = new QCue(aCueList, this);
+                    cueList.sortIndex = index;
+                    if (connectedToQLab3)
+                        cueList.setProperty(QCueType.CueList, QOSCKey.Type);
+                    rootCueUpdated = true;
+                }
+                currentCueLists.Add(cueList);
+                index++;
+            }
+
+            QCue activeCuesList = root.cueWithID(QIdentifiers.ActiveCues, false);
+            if(activeCuesList != null)
+            {
+                if (activeCuesList.sortIndex != index)
+                {
+                    activeCuesList.setProperty(QIdentifiers.ActiveCues, QOSCKey.UID, false);
+                    activeCuesList.setProperty("Active Cues", QOSCKey.Name, false);
+                    activeCuesList.setProperty(QCueType.CueList, QOSCKey.Type, false);
+
+                    rootCueUpdated = true;
+                }
+            }
+            else
+            {
+                activeCuesList = new QCue(this);
+                activeCuesList.setProperty(QIdentifiers.ActiveCues, QOSCKey.UID, false);
+                activeCuesList.setProperty("Active Cues", QOSCKey.Name, false);
+                activeCuesList.setProperty(QCueType.CueList, QOSCKey.Type, false);
+                rootCueUpdated = true;
+            }
+            currentCueLists.Add(activeCuesList);
+
+            if (root.cues.Count() != currentCueLists.Count())
+                rootCueUpdated = true;
+
+            root.setProperty(currentCueLists, QOSCKey.Cues);
+
+            if (rootCueUpdated)
+            {
+                //add Event handled? use CueUpdated one?
+            }
+
+            Console.WriteLine($"[workspace] cueLists finished processing. root updated? {rootCueUpdated}");
+
+            Print();
+        }
+
+
+        //OnWorkspaceUpdated
+        //OnWorkspaceSettingsUpdated
+        //LightDashboardUpdated
+        //PreferencesUpdated
+        //CueNeedsUpdated
+        //CueUpdated
+        //ClientShouldDisconnect
+        #endregion
+
+
+        #region Printing
+        public void Print()
+        {
+            foreach(var cueList in root.cues)
+            {
+                cueList.Print();
+            }
+        }
         #endregion
     }
 }

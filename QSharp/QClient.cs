@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using SharpOSC;
 
 namespace QSharp
@@ -9,62 +11,208 @@ namespace QSharp
     {
         TCPClient tcpClient;
 
-        public class WorkspacesUpdatedArgs : EventArgs
-        {
-            public List<QWorkspaceInfo> Workspaces { get; set; }
-        }
+        public event QWorkspacesUpdatedHandler WorkspacesUpdated;
+        
+        public event QCueUpdatedHandler CueUpdated;
+        public event QCueListsUpdatesHandler CueListsUpdated;
+        public event QCueNeedsUpdatedHandler CueNeedsUpdated;
 
+        public event QCueListChangedPlaybackPositionHandler CueListChangedPlaybackPosition;
 
-        public delegate void WorkspacesUpdatedHandler(object source, WorkspacesUpdatedArgs args);
-        public event WorkspacesUpdatedHandler WorkspacesUpdated;
+        public event QWorkspaceUpdatedHandler WorkspaceUpdated;
+        public event QWorkspaceSettingsUpdatedHandler WorkspaceSettingsUpdated;
+
+        public event QWorkspaceLightDashboardUpdatedHandler WorkspaceLightDashboardUpdated;
+        public event QQLabPreferencesUpdatedHandler QLabPreferencesUpdated;
+
+        public event QWorkspaceDisconnectedHandler WorkspaceDisconnected;
+        public event QWorkspaceConnectedHandler WorkspaceConnected;
+        public event QWorkspaceConnectionErrorHandler WorkspaceConnectionError;
 
         public QClient(string host, int port)
         {
             tcpClient = new TCPClient(host, port);
-            tcpClient.Connect();
-            Console.WriteLine($"QClient setup {host}:{port}");
-            tcpClient.MessageReceived += ResponseReceived;
+            Console.WriteLine($"[QClient] setup connection to: <{host}:{port}>");
+            tcpClient.MessageReceived += ProcessMessage;
         }
 
-        private void ResponseReceived(object source, MessageEventArgs args)
+        
+        public bool IsConnnected { get { return tcpClient.IsConnected;  } }
+
+        public bool connect()
         {
-            OscMessage msg = args.Message;
-            foreach (var obj in msg.Arguments)
-            {
-                QResponse response = JsonConvert.DeserializeObject<QResponse>(obj.ToString());
-
-                switch (response.getReplyType())
-                {
-                    case "WORKSPACES":
-                        Console.WriteLine("WORKSPACES RECEIVED");
-                        OnWorkspacesUpdated(response);
-                        break;
-                    default:
-                        break;
-                }
-                
-            }
+            return tcpClient.Connect();
         }
+
+        public void disconnect()
+        {
+            tcpClient.Close();
+        }
+
 
         public void sendMessage(string address, params object[] args)
         {
             tcpClient.Send(new OscMessage(address, args));
-            Console.WriteLine($"QClient send message {address}");
+           // Console.WriteLine($"QClient send message {address}");
         }
 
-        protected virtual void OnWorkspacesUpdated(QResponse response)
+        private void ProcessMessage(object source, MessageEventArgs args)
+        {
+
+            QMessage message = new QMessage(args.Message);
+
+            if (message.IsReply)
+            {
+                JToken data = message.response;
+                //special case, want to update cue properties
+                if (message.IsReplyFromCue)
+                {
+                    //todo check data type?
+                }
+                else if (message.IsReplyFromCueLists)
+                {
+                    OnCueListsUpdated(message.response);
+                }
+                else if (message.IsWorkspacesInfo)
+                {
+                    OnWorkspacesUpdated(message);
+                }
+                else if (message.IsConnect)
+                {
+                    if (message.response.ToString() == "ok")
+                        OnWorkspaceConnected();
+                    else
+                        OnWorkspaceConnectionError(message.response.ToString());
+                }
+                else
+                {
+                    Console.WriteLine($"[client] unhandled reply message: {message.address}");
+                }
+            }
+            else if(message.IsUpdate) {
+                if (message.IsCueUpdate)
+                {
+                    OnCueNeedsUpdated(message.cueID);
+                }
+                else if (message.IsPlaybackPositionUpdate)
+                {
+                    OnCueListChangedPlaybackPosition(message.cueID);
+                }
+                else if (message.IsWorkspaceUpdate)
+                {
+                    OnWorkspaceUpdated();
+                }
+                else if (message.IsWorkspaceSettingsUpdate)
+                {
+                    string settingsType = message.AddressParts.Last();
+                    if (settingsType == null)
+                        return;
+                    OnWorkspaceSettingsUpdated(settingsType);
+                }
+                else if (message.IsLightDashboardUpdate)
+                {
+                    //need to do checks for 4.2 or newer
+                    OnWorkspaceLightDashboardUpdated();
+                }
+                else if ( message.IsPreferencesUpdate)
+                {
+                    //need to do checks for 4.2 or newer
+
+                    string key = message.AddressParts.Last();
+                    if (key == null)
+                        return;
+                    OnQLabPreferencesUpdated(key);
+                }
+                else if (message.IsDisconnect)
+                {
+                    Console.WriteLine($"[client] disconnect message received: {message.address}");
+                    OnWorkspaceDisconnected();
+                }
+                else
+                {
+                    Console.WriteLine($"[client] unhandled update message: {message.address}");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"[client] unhandled message: {message.address}");
+            }
+        }
+
+        protected virtual void OnCueNeedsUpdated(string cueID)
+        {
+            if (CueNeedsUpdated != null)
+                CueNeedsUpdated(this, new QCueNeedsUpdatedArgs { cueID = cueID });
+        }
+
+        protected virtual void OnCueListsUpdated(JToken response)
+        {
+            if (CueListsUpdated != null)
+                CueListsUpdated(this, new QCueListsUpdatedArgs { data = response });
+        }
+
+        protected virtual void OnCueListChangedPlaybackPosition(string cueID)
+        {
+            if (CueListChangedPlaybackPosition != null)
+                CueListChangedPlaybackPosition(this, new QCueListChangedPlaybackPositionArgs { cueID = cueID });
+        }
+
+        protected virtual void OnWorkspaceUpdated()
+        {
+            if (WorkspaceUpdated != null)
+                WorkspaceUpdated(this, new QWorkspaceUpdatedArgs());
+        }
+
+        protected virtual void OnWorkspaceSettingsUpdated(string settingsType)
+        {
+            if (WorkspaceSettingsUpdated != null)
+                WorkspaceSettingsUpdated(this, new QWorkspaceSettingsUpdatedArgs { settingsType = settingsType});
+        }
+
+        protected virtual void OnWorkspaceLightDashboardUpdated()
+        {
+            if (WorkspaceLightDashboardUpdated != null)
+                WorkspaceLightDashboardUpdated(this, new QWorkspaceLightDashboardUpdatedArgs());
+        }
+
+        protected virtual void OnQLabPreferencesUpdated(string key)
+        {
+            if (QLabPreferencesUpdated != null)
+                QLabPreferencesUpdated(this, new QQLabPreferencesUpdatedArgs { key = key });
+        }
+
+        protected virtual void OnWorkspaceDisconnected()
+        {
+            if (WorkspaceDisconnected != null)
+                WorkspaceDisconnected(this, new QWorkspaceDisconnectedArgs());
+        }
+
+        protected virtual void OnWorkspaceConnected()
+        {
+            if (WorkspaceConnected != null)
+                WorkspaceConnected(this, new QWorkspaceConnectedArgs());
+        }
+
+        protected virtual void OnWorkspaceConnectionError(string status)
+        {
+            if (WorkspaceConnectionError != null)
+                WorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = status});
+        }
+
+        protected virtual void OnWorkspacesUpdated(QMessage message)
         {
             if(WorkspacesUpdated != null)
             {
                 List<QWorkspaceInfo> workspaces = new List<QWorkspaceInfo>();
-                foreach (var item in response.data)
+                foreach (var item in message.response)
                 {
                     QWorkspaceInfo workspacefound = JsonConvert.DeserializeObject<QWorkspaceInfo>(item.ToString());
                     workspaces.Add(workspacefound);
-                    Console.WriteLine(workspacefound.displayName);
                 }
-                WorkspacesUpdated(this, new WorkspacesUpdatedArgs { Workspaces = workspaces });
+                WorkspacesUpdated(this, new QWorkspacesUpdatedArgs { Workspaces = workspaces });
             }
         }
+
+        
     }
 }
