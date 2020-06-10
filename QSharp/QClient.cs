@@ -141,48 +141,56 @@ namespace QSharp
 
         protected virtual void OnCueNeedsUpdated(string cueID)
         {
+            Console.WriteLine($"[client] cue needs updated: {cueID}");
             if (CueNeedsUpdated != null)
                 CueNeedsUpdated(this, new QCueNeedsUpdatedArgs { cueID = cueID });
         }
 
         protected virtual void OnCueListsUpdated(JToken response)
         {
+            Console.WriteLine($"[client] Cue Lists Updated Changed");
             if (CueListsUpdated != null)
                 CueListsUpdated(this, new QCueListsUpdatedArgs { data = response });
         }
 
         protected virtual void OnCueListChangedPlaybackPosition(string cueID)
         {
+            Console.WriteLine($"[client] Playback Position changed: {cueID}");
             if (CueListChangedPlaybackPosition != null)
                 CueListChangedPlaybackPosition(this, new QCueListChangedPlaybackPositionArgs { cueID = cueID });
         }
 
         protected virtual void OnWorkspaceUpdated()
         {
+            Console.WriteLine($"[client] Workspace Updated");
             if (WorkspaceUpdated != null)
                 WorkspaceUpdated(this, new QWorkspaceUpdatedArgs());
         }
 
         protected virtual void OnWorkspaceSettingsUpdated(string settingsType)
         {
+            Console.WriteLine($"[client] Workspace Settings Updated");
             if (WorkspaceSettingsUpdated != null)
                 WorkspaceSettingsUpdated(this, new QWorkspaceSettingsUpdatedArgs { settingsType = settingsType});
         }
 
         protected virtual void OnWorkspaceLightDashboardUpdated()
         {
+            Console.WriteLine($"[client] Workspace Light Dashboard Updated");
             if (WorkspaceLightDashboardUpdated != null)
                 WorkspaceLightDashboardUpdated(this, new QWorkspaceLightDashboardUpdatedArgs());
         }
 
         protected virtual void OnQLabPreferencesUpdated(string key)
         {
+            Console.WriteLine($"[client] QLab Preferences Updated");
             if (QLabPreferencesUpdated != null)
                 QLabPreferencesUpdated(this, new QQLabPreferencesUpdatedArgs { key = key });
         }
 
         protected virtual void OnWorkspaceDisconnected()
         {
+            Console.WriteLine($"[client] Workspace Disconnected");
             if (WorkspaceDisconnected != null)
                 WorkspaceDisconnected(this, new QWorkspaceDisconnectedArgs());
         }
