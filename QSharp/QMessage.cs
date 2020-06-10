@@ -37,7 +37,6 @@ namespace QSharp
 
         public bool IsUpdate { get{ return OSCMessage.Address.StartsWith("/update"); } }
 
-
         public bool IsWorkspaceUpdate { 
             get {
                 // /update/workspace/{workspace_id}
@@ -54,7 +53,6 @@ namespace QSharp
             } 
         }
 
-
         public bool IsWorkspaceSettingsUpdate { 
             get {
                 // /update/workspace/{workspace_id}/settings/{settings_controller}
@@ -62,7 +60,6 @@ namespace QSharp
                 return (parts.Length == 5 && parts[1].Equals("workspace") && parts[3].Equals("settings"));
             } 
         }
-
 
         public bool IsLightDashboardUpdate { 
             get {
@@ -72,7 +69,6 @@ namespace QSharp
             } 
         }
 
-
         public bool IsCueUpdate { 
             get {
                 // /update/workspace/{workspace_id}/cue_id/{cue_id}
@@ -81,7 +77,6 @@ namespace QSharp
             } 
         }
 
-
         public bool IsPlaybackPositionUpdate { 
             get { 
                 // /update/workspace/{workspace_id}/cueList/{cue_list_id}/playbackPosition {cue_id}
@@ -89,7 +84,6 @@ namespace QSharp
                 return (parts.Length == 6 && address.EndsWith("/playbakPosition"));
             } 
         }
-
 
         public bool IsPreferencesUpdate { 
             get { 
@@ -115,6 +109,7 @@ namespace QSharp
         }
         #endregion
 
+        //host method
 
         public string address { get { return OSCMessage.Address; } }
 
@@ -136,8 +131,6 @@ namespace QSharp
             get
             {
                 JObject responseObj = JObject.Parse((string)arguments[0]);
-
-                //TODO
                 return responseObj["data"];
             }
         }
@@ -165,7 +158,6 @@ namespace QSharp
                 }
             }
         }
-
 
     }
 }

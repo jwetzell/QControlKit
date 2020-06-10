@@ -6,10 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Terminal.Gui" Version="0.81.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\QSharp\QSharp.csproj" />
   </ItemGroup>
 </Project>
