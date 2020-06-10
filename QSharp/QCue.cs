@@ -642,6 +642,15 @@ namespace QSharp
 
         #endregion
 
+        //TODO
+        public void sendAllPropertiesToQLab() { }
+
+        //TODO
+        public void pullDownPropertyForKey(string key) { }
+        
+        //TODO
+        public void setPlaybackPositionID(string cueID, bool osc) { }
+
         //Methods Copied: Yes
         //Methods Implemented: Yes
         #region Actions
@@ -661,11 +670,11 @@ namespace QSharp
         #region Printing
         public void Print()
         {
-            if (IsCueList)
+            if (IsGroup)
             {
-                if(cues != null && cues.Count() > 0)
+                Console.WriteLine($"{displayName} : {color}");
+                if (cues.Count() > 0)
                 {
-                    Console.WriteLine(displayName);
                     foreach(var cue in cues)
                     {
                         cue.Print();
