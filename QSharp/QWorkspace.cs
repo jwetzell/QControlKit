@@ -418,10 +418,12 @@ namespace QSharp
         #region Printing
         public void Print()
         {
-            foreach(var cueList in root.cues)
+            Console.WriteLine($"[workspace] {name}");
+            foreach (var cueList in root.cues)
             {
                 cueList.Print();
             }
+            Console.WriteLine("[workspace] End of Workspace");
         }
         #endregion
     }

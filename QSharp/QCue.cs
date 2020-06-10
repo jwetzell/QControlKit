@@ -38,23 +38,29 @@ namespace QSharp
             init();
             this.workspace = workspace;
 
-            JToken children = dict[QOSCKey.Cues];
+            //this breaks things??? 
+            //it definitely is in the original but somehow the recursion is not working as I expect..
+            //but cue population still works without this as child cues are populated in a later
+
+            /*JToken children = dict[QOSCKey.Cues];
             if(children != null && children.Type == JTokenType.Array)
             {
-                //Console.WriteLine($"[cue] new cue being created with {children.Count()} childCues");
+                Console.WriteLine($"[cue] new cue being created with {children.Count()} childCues");
                 foreach (var aChildDict in children)
                 {
                     string uid = (string)aChildDict[QOSCKey.UID];
                     //Console.WriteLine($"[cue] childDict with uid: {uid} being processed");
                     if (uid == null)
                         continue;
-                    
-                    QCue child = new QCue(aChildDict, workspace);
+                    string name = dict[QOSCKey.UID].ToString();
+                    Console.WriteLine($"[cue] calling new cue from {name}");
 
-                    childCues.Add(child);
-                    childCuesUIDMap.Add(uid, child);
+                    //QCue child = new QCue(aChildDict, workspace); 
+
+                    *//*childCues.Add(child);
+                    childCuesUIDMap.Add(uid, child);*//*
                 }
-            }
+            }*/
 
             updatePropertiesWithDictionary(dict);
         }
@@ -63,12 +69,12 @@ namespace QSharp
         {
             cueData = new Dictionary<string, object> {
                 { QOSCKey.Flagged, false },
-                { QOSCKey.Armed, false },
-                { QOSCKey.PreWait, false },
-                { QOSCKey.PercentPreWaitElapsed, false },
-                { QOSCKey.PercentActionElapsed, false },
-                { QOSCKey.PostWait, false },
-                { QOSCKey.PercentPostWaitElapsed, false },
+                { QOSCKey.Armed, true },
+                { QOSCKey.PreWait, 0.0 },
+                { QOSCKey.PercentPreWaitElapsed, 0.0 },
+                { QOSCKey.PercentActionElapsed, 0.0 },
+                { QOSCKey.PostWait, 0.0 },
+                { QOSCKey.PercentPostWaitElapsed, 0.0 },
                 { QOSCKey.IsPanicking, false },
                 { QOSCKey.IsTailingOut, false },
                 { QOSCKey.IsRunning, false },
@@ -76,9 +82,8 @@ namespace QSharp
                 { QOSCKey.IsPaused, false },
                 { QOSCKey.IsBroken, false },
                 { QOSCKey.IsOverridden, false },
-                { QOSCKey.ContinueMode, false }
+                { QOSCKey.ContinueMode, 0 }
             };
-            //TODO init cueData with some keys
 
             childCues = new List<QCue>();
             childCuesUIDMap = new Dictionary<string, QCue>();
@@ -166,7 +171,11 @@ namespace QSharp
         {
             get
             {
-                return propertyForKey(QOSCKey.Number).ToString();
+                object num = propertyForKey(QOSCKey.Number);
+                if (num != null)
+                    return num.ToString();
+                else
+                    return "";
             }
         }
         public string uid
@@ -209,35 +218,35 @@ namespace QSharp
         {
             get
             {
-                return (bool)propertyForKey("OSCNameKey");
+                return (bool)propertyForKey(QOSCKey.IsOverridden);
             }
         }
         public bool IsBroken
         {
             get
             {
-                return (bool)propertyForKey("OSCNameKey");
+                return (bool)propertyForKey(QOSCKey.IsBroken);
             }
         }
         public bool IsRunning
         {
             get
             {
-                return (bool)propertyForKey("OSCNameKey");
+                return (bool)propertyForKey(QOSCKey.IsRunning);
             }
         }
         public bool IsTailingOut
         {
             get
             {
-                return (bool)propertyForKey("OSCNameKey");
+                return (bool)propertyForKey(QOSCKey.IsTailingOut);
             }
         }
         public bool IsPanicking
         {
             get
             {
-                return (bool)propertyForKey("OSCNameKey");
+                return (bool)propertyForKey(QOSCKey.IsPanicking);
             }
         }
         public bool IsGroup 
@@ -267,8 +276,13 @@ namespace QSharp
             get
             {
                 string number = this.number;
-                if (number.Length > 0)
-                    return $"{number} \u00b7 {nonEmptyName}";
+                if(number != null)
+                {
+                    if (number.Length > 0)
+                        return $"{number} \u00b7 {nonEmptyName}";
+                    else
+                        return nonEmptyName;
+                }
                 else
                     return nonEmptyName;
             }
@@ -292,7 +306,6 @@ namespace QSharp
         public string workspaceName{ get { return workspace.name; } }
         public double currentDuration
         {
-            
             get
             {
                 //try v4 current duration key first
@@ -330,14 +343,22 @@ namespace QSharp
             get
             {
                 //TODO
-                return (string)propertyForKey("patchDecription");
+                return propertyForKey("patchDecription").ToString();
             }
         }
 
         //TODO: THIS IS WHERE THINGS START TO GET TRICKY!
 
         //TODO add object color method
-        public string color { get { return propertyForKey(QOSCKey.ColorName).ToString(); } }
+        public string color { 
+            get {
+                object col = propertyForKey(QOSCKey.ColorName);
+                if (col != null)
+                    return col.ToString();
+                else
+                    return "none";
+            } 
+        }
 
         //TODO add quaternion property and setter
 
@@ -412,10 +433,6 @@ namespace QSharp
         #region Update Methods
         public bool updatePropertiesWithDictionary(JToken dict)
         {
-            return updatePropertiesWithDictionary(dict, true);
-        }
-        public bool updatePropertiesWithDictionary(JToken dict, bool notify)
-        {
             bool cueUpdated = false;
 
             //TODO
@@ -440,18 +457,18 @@ namespace QSharp
 
             if (!cueUpdated)
                 return false;
-            if (notify)
-                Console.WriteLine("should notify cue updated.");
+            
+            Console.WriteLine($"[cue] {nonEmptyName} has been updated.");
             //something about notifying cueUpdated ? OnCueUpdated event handler maybe?
 
             return true;
         }
 
         //enqueue updated notification?
-        public void updateChildCuesWithPropertiesArray(JToken value, bool removeUnused)
+        public bool updateChildCuesWithPropertiesArray(JToken value, bool removeUnused)
         {
             if (!workspace.connected)
-                return;
+                return false;
 
             List<string> previousUids = null;
             if (removeUnused)
@@ -490,12 +507,10 @@ namespace QSharp
                     child.sortIndex = index;
                     addChildCue(child, uid);
                     needsNotifyCueUpdated = true;
-
                 }
                 index++;
             }
-
-
+            return needsNotifyCueUpdated;
             //TODO: TEST?!
         }
         #endregion
@@ -507,8 +522,9 @@ namespace QSharp
         #region Children Cues
         public List<string> allChildCueUids()
         {
+            List<string> uids = new List<string>(childCuesUIDMap.Keys);
             //TODO
-            return new List<string>();
+            return uids;
         }
         public QCue cueAtIndex(int index)
         {
@@ -574,7 +590,6 @@ namespace QSharp
             {
                 if (existingValue == value || existingValue.Equals(value))
                 {
-                    //Console.WriteLine($"[cue] skipping set property: {key} with type: {value.GetType()} and value: {value}");
                     return false;
                 }
             }
@@ -645,11 +660,12 @@ namespace QSharp
         //TODO
         public void sendAllPropertiesToQLab() { }
 
-        //TODO
+        //TODO: I don't think I'll do this one
         public void pullDownPropertyForKey(string key) { }
         
-        //TODO
-        public void setPlaybackPositionID(string cueID, bool osc) { }
+        public void setPlaybackPositionID(string cueID, bool osc) {
+            setProperty(cueID, QOSCKey.PlaybackPositionId, osc);
+        }
 
         //Methods Copied: Yes
         //Methods Implemented: Yes
@@ -667,23 +683,21 @@ namespace QSharp
         public void panic() { workspace.panicCue(this); }
         #endregion
 
+
         #region Printing
+        //this still needs fixing
         public void Print()
         {
+            Console.WriteLine($"{displayName} : {color}");
             if (IsGroup)
             {
-                Console.WriteLine($"{displayName} : {color}");
                 if (cues.Count() > 0)
                 {
-                    foreach(var cue in cues)
+                    foreach (var cue in cues)
                     {
                         cue.Print();
                     }
                 }
-            }
-            else
-            {
-                Console.WriteLine($"{displayName} : {color}");
             }
         }
         #endregion

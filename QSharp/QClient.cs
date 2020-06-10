@@ -148,14 +148,14 @@ namespace QSharp
 
         protected virtual void OnCueListsUpdated(JToken response)
         {
-            Console.WriteLine($"[client] Cue Lists Updated Changed");
+            Console.WriteLine($"[client] Cue Lists Updated");
             if (CueListsUpdated != null)
                 CueListsUpdated(this, new QCueListsUpdatedArgs { data = response });
         }
 
         protected virtual void OnCueListChangedPlaybackPosition(string cueID)
         {
-            Console.WriteLine($"[client] Playback Position changed: {cueID}");
+            Console.WriteLine($"[client] Playback Position Changed: {cueID}");
             if (CueListChangedPlaybackPosition != null)
                 CueListChangedPlaybackPosition(this, new QCueListChangedPlaybackPositionArgs { cueID = cueID });
         }
