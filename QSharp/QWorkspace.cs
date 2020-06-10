@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Timers;
 
 namespace QSharp
@@ -32,7 +33,7 @@ namespace QSharp
             name = "";
             uniqueID = "";
             connected = false;
-
+            passcode = "";
             hasPasscode = false;
             defaultSendUpdatesOSC = false;
 
@@ -41,20 +42,22 @@ namespace QSharp
             root.setProperty("Cue Lists", QOSCKey.Name, false);
             root.setProperty(QCueType.CueList, QOSCKey.Type, false);
 
-            //TODO: add version 
-            version = "3.0.0";
-
+            if (version == null || version.Length <= 0)
+                version = "3.0.0";
         }
 
         public QWorkspace(QWorkspaceInfo workspaceInfo, QServer server)
         {
-            Init();
 
-            if(workspaceInfo.uniqueID.Length > 0)
-                uniqueID = workspaceInfo.uniqueID;
+            
 
             if (workspaceInfo.version.Length > 0)
                 version = workspaceInfo.version;
+
+            Init();
+
+            if (workspaceInfo.uniqueID.Length > 0)
+                uniqueID = workspaceInfo.uniqueID;
 
             updateWithWorkspaceInfo(workspaceInfo);
 
@@ -97,24 +100,24 @@ namespace QSharp
         public QCue firstCueList { get { return root.firstCue; } }
         public string fullNameWithCueList(QCue cueList) { return ""; }
         //TODO other convenience methods
-
-        public bool connectedToQLab3 { get { return false; } } //TODO implement the version system
+        public string[] versionParts { get { return version.Split('.'); } }
+        public bool connectedToQLab3 { get { return versionParts[0] == "3"; } }
 
         #region Connection/reconnection
 
         public void connectWithPasscode(string passcode)
         {
             //TODO
-
             if (!client.connect())
             {
-                System.Console.WriteLine($"[workspace] *** Error: couldn't connect to server");
+                System.Console.WriteLine($"[workspace] *** Error: couldn't connect to server client is not connected");
                 return;
             }
 
+            //save password for reuse
+            this.passcode = passcode;
             System.Console.WriteLine("[workspace] connecting...");
             client.sendMessage($"{workspacePrefix}/connect",passcode);
-
         }
 
         private void finishConnection()
@@ -244,11 +247,33 @@ namespace QSharp
         #endregion
 
         #region Cue Getters/Setters
+ 
+        public void valueForKey(QCue cue, string key) { client.sendMessage(addressForCue(cue, key)); }
+
         //TODO
+        public void valuesForKeys(QCue cue, string[] keys) { }
+        //TODO
+        public void updatePropertySend(QCue cue, object value, string key) { }
+        //TODO
+        public void updatePropertiesSend(QCue cue, object[] values, string key) { }
+        //TODO
+        public void updateAllCueProperties()
+        {
+            root.sendAllPropertiesToQLab();
+        }
+        public void runningOrPausedCues()
+        {
+            client.sendMessage($"{workspacePrefix}/runningOrPausedCues");
+        }
         #endregion
 
         #region Property Fetching
         //TODO
+
+        public void fetchPropertiesForCue(QCue cue, string[] keys)
+        {
+
+        }
         #endregion
 
         #region OSC address helpers
@@ -286,7 +311,11 @@ namespace QSharp
         private void OnWorkspaceConnectionError(object source, QWorkspaceConnectionErrorArgs args)
         {
             if (args.status.Equals("badpass"))
+            {
+                //clear passcode if there was one set in the connect() method
+                this.passcode = "";
                 Console.WriteLine($"[workspace] *** Error: Password for workspace {name} was incorrect!");
+            }                
             else
                 Console.WriteLine($"[workspace] *** Error: Unable to connect to workspace: {name} on server: {server.name}");
 
