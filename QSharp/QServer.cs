@@ -1,4 +1,5 @@
 ﻿//General information about a QLab Workspace
+using Serilog;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Zeroconf;
@@ -7,13 +8,15 @@ namespace QSharp
 {
     public class QServer
     {
+        public event QServerUpdatedHandler ServerUpdated;
+
         private QClient client;
 
         public string host;
         public int port;
         public string name;
         public IZeroconfHost zeroconfHost;
-        List<QWorkspace> workspaces = new List<QWorkspace>();
+        public List<QWorkspace> workspaces = new List<QWorkspace>();
 
         public QServer(string host, int port)
         {
@@ -21,7 +24,12 @@ namespace QSharp
             this.port = port;
 
             client = new QClient(host, port);
-            client.WorkspacesUpdated += OnWorkspacesUpdated;
+            client.WorkspacesUpdated += OnServerWorkspacesUpdated;
+
+            if (!client.connect())
+            {
+                Log.Error($"[server] unable to connect to QLab Server: {host}:{port}");
+            }
         }
 
         public string description { get { return $"{name} - {host} - {port}"; } }
@@ -29,11 +37,6 @@ namespace QSharp
         
         public void refreshWorkspaces()
         {
-            if (!client.connect())
-            {
-                System.Console.WriteLine($"Error: QServer unable to connect to QLab Server: {host}:{port}");
-                return;
-            }
             client.sendMessage("/workspaces");
         }
 
@@ -48,7 +51,7 @@ namespace QSharp
         }
 
         #region EventHandlers
-        private void OnWorkspacesUpdated(object source, QWorkspacesUpdatedArgs args)
+        private void OnServerWorkspacesUpdated(object source, QWorkspacesUpdatedArgs args)
         {
             foreach (var workspace in args.Workspaces)
             {
@@ -57,11 +60,26 @@ namespace QSharp
                 {
                     QWorkspace workspaceToAdd = new QWorkspace(workspace, this);
                     workspaces.Add(workspaceToAdd);
-                    workspaceToAdd.connectWithPasscode("1234");
                 }
             }
+            OnServerUpdated(this);
+        }
+
+        protected virtual void OnServerUpdated(QServer server)
+        {
+            ServerUpdated?.Invoke(this, new QServerUpdatedArgs { server = server });
         }
         #endregion
+
+        public void Close()
+        {
+            foreach (var workspace in workspaces)
+            {
+                if(workspace.connected)
+                    workspace.Close();
+            }
+            client.Close();
+        }
 
     }
 }

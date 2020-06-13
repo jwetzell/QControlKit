@@ -1,8 +1,9 @@
 ﻿//TODO: connect methods, cue property fetch methods, everything else
+using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using System.Timers;
 
 namespace QSharp
@@ -16,7 +17,7 @@ namespace QSharp
         public string name;
         public string uniqueID;
         public bool connected;
-        private bool hasPasscode;
+        public bool hasPasscode;
         private string passcode;
 
         private QCue root;
@@ -28,6 +29,9 @@ namespace QSharp
 
         public string version;
 
+
+        public event QWorkspaceUpdatedHandler WorkspaceUpdated;
+        public event QCueListChangedPlaybackPositionHandler CueListChangedPlaybackPosition;
         private void Init()
         {
             name = "";
@@ -63,13 +67,16 @@ namespace QSharp
 
             client = new QClient(server.host, server.port);
             
-            client.WorkspaceConnected += OnWorkspaceConnection;
+            client.WorkspaceConnected += OnWorkspaceConnected;
             client.WorkspaceConnectionError += OnWorkspaceConnectionError;
             client.WorkspaceDisconnected += OnWorkspaceDisconnected;
             client.CueListsUpdated += OnCueListsUpdated;
+            client.CueListChangedPlaybackPosition += OnCueListChangedPlaybackPosition;
+            client.CueNeedsUpdated += OnCueNeedsUpdated;
+            client.CueUpdated += OnCueUpdated;
 
             this.server = server;
-            Console.WriteLine($"[workspace] <{name}> initizalied for server: {server.name} ");
+            Log.Debug($"[workspace] <{name}> initizalied for server: {server.name} ");
         }
 
         //updateWithDictionary
@@ -90,7 +97,36 @@ namespace QSharp
 
         public string description { get { return $"{name} : {uniqueID}"; } }
 
-        public string nameWithoutPathExtension { get { return name;  } } //TODO
+        public bool isOlderThanVersion(string version)
+        {
+            var thisVersion = new Version(this.version);
+            var otherVersion = new Version(version);
+            return thisVersion.CompareTo(otherVersion) < 0;
+        }
+
+        public bool isEqualToVersion(string version)
+        {
+            var thisVersion = new Version(this.version);
+            var otherVersion = new Version(version);
+            return thisVersion.CompareTo(otherVersion) == 0;
+        }
+
+        public bool isNewerThanVersion(string version)
+        {
+            var thisVersion = new Version(this.version);
+            var otherVersion = new Version(version);
+            return thisVersion.CompareTo(otherVersion) > 0;
+        }
+
+        public string nameWithoutPathExtension { 
+            get {
+                if (name.EndsWith(".cues"))
+                    return name.Substring(0, name.Length - 5);
+                else if (name.EndsWith(".qlab4"))
+                    return name.Substring(0, name.Length - 6);
+                return name;
+            } 
+        } //TODO
 
         public string serverName { get { return server.name; } }
 
@@ -98,6 +134,8 @@ namespace QSharp
 
         public QCue firstCue { get { return firstCueList.firstCue; } }
         public QCue firstCueList { get { return root.firstCue; } }
+
+        public List<QCue> cueLists { get { return root.cues; } }
         public string fullNameWithCueList(QCue cueList) { return ""; }
         //TODO other convenience methods
         public string[] versionParts { get { return version.Split('.'); } }
@@ -110,20 +148,20 @@ namespace QSharp
             //TODO
             if (!client.connect())
             {
-                System.Console.WriteLine($"[workspace] *** Error: couldn't connect to server client is not connected");
+                Log.Error($"[workspace] *** Error: couldn't connect to server client is not connected");
                 return;
             }
 
             //save password for reuse
             this.passcode = passcode;
-            System.Console.WriteLine("[workspace] connecting...");
+            Log.Information("[workspace] connecting...");
             client.sendMessage($"{workspacePrefix}/connect",passcode);
         }
 
         private void finishConnection()
         {
             //TODO
-            System.Console.WriteLine($"[workspace] connected to <{name}> running on QLab version <{version}>");
+            Log.Information($"[workspace] connected to <{name}> running on QLab version <{version}>");
             connected = true;
             startReceivingUpdates();
             //fetchQLabVersion();
@@ -143,7 +181,7 @@ namespace QSharp
         public void disconnect()
         {
             //TODO
-            Console.WriteLine($"[workspace] disconnect: {name}");
+            Log.Information($"[workspace] disconnect: {name}");
             stopHeartbeat();
             stopReceivingUpdates();
             disconnectFromWorkspace();
@@ -163,7 +201,7 @@ namespace QSharp
         #endregion  
 
         #region Cues
-        public QCue cueWithId(string uid)
+        public QCue cueWithID(string uid)
         {
             return root.cueWithID(uid);
         }
@@ -249,14 +287,19 @@ namespace QSharp
         #region Cue Getters/Setters
  
         public void valueForKey(QCue cue, string key) { client.sendMessage(addressForCue(cue, key)); }
+        
+        public void valuesForKeys(QCue cue, string[] keys) 
+        {
+            string keyString = JsonConvert.SerializeObject(keys);
+            client.sendMessage(addressForCue(cue, "valuesForKeys"), keyString);
+        }
 
-        //TODO
-        public void valuesForKeys(QCue cue, string[] keys) { }
-        //TODO
-        public void updatePropertySend(QCue cue, object value, string key) { }
-        //TODO
-        public void updatePropertiesSend(QCue cue, object[] values, string key) { }
-        //TODO
+        public void updatePropertySend(QCue cue, object value, string key) {
+                client.sendMessage(addressForCue(cue, key), value);
+        }
+
+        public void updatePropertiesSend(QCue cue, object[] values, string key) { client.sendMessage(addressForCue(cue, key), values); }
+
         public void updateAllCueProperties()
         {
             root.sendAllPropertiesToQLab();
@@ -270,9 +313,34 @@ namespace QSharp
         #region Property Fetching
         //TODO
 
-        public void fetchPropertiesForCue(QCue cue, string[] keys)
-        {
 
+        public void fetchDefaultPropertiesForCue(QCue cue)
+        {
+            string[] keys = new string[] {  QOSCKey.UID, QOSCKey.Number, QOSCKey.Name, 
+                                            QOSCKey.ListName, QOSCKey.Type, QOSCKey.ColorName, 
+                                            QOSCKey.Flagged, QOSCKey.Armed, QOSCKey.Notes };
+            fetchPropertiesForCue(cue, keys, false);
+        }
+
+        public void fetchBasicPropertiesForCue(QCue cue)
+        {
+            string[] keys = new string[] {  QOSCKey.Name, QOSCKey.Number, QOSCKey.FileTarget, QOSCKey.CueTargetNumber, 
+                                            QOSCKey.HasFileTargets, QOSCKey.HasCueTargets, QOSCKey.Armed, QOSCKey.ColorName, 
+                                            QOSCKey.ContinueMode, QOSCKey.Flagged, QOSCKey.PreWait, QOSCKey.PostWait, 
+                                            QOSCKey.Duration, QOSCKey.AllowsEditingDuration };
+            fetchPropertiesForCue(cue, keys, false);
+        }
+
+        public void fetchPropertiesForCue(QCue cue, string[] keys, bool includeChildren)
+        {
+            valuesForKeys(cue, keys);
+
+            if (!includeChildren)
+                return;
+            foreach (var childCue in cue.cues)
+            {
+                fetchPropertiesForCue(cue, keys, includeChildren);
+            }
         }
         #endregion
 
@@ -280,12 +348,14 @@ namespace QSharp
         public void sendMessage(string address, params object[] args)
         {
             //check for workspace prefix?
+            if (!address.StartsWith(workspacePrefix))
+                address = workspacePrefix + address;
             client.sendMessage(address, args);
         }
 
         private string addressForCue(QCue cue, string action)
         {
-            return $"{workspacePrefix}/cue_id/{cue.propertyForKey("uniqueId")}/{action}";
+            return $"{workspacePrefix}/cue_id/{cue.propertyForKey(QOSCKey.UID)}/{action}";
         }
 
         private string addressForWildcardNumber(string number, string action) {
@@ -314,23 +384,23 @@ namespace QSharp
             {
                 //clear passcode if there was one set in the connect() method
                 this.passcode = "";
-                Console.WriteLine($"[workspace] *** Error: Password for workspace {name} was incorrect!");
+                Log.Error($"[workspace] *** Password for workspace {name} was incorrect!");
             }                
             else
-                Console.WriteLine($"[workspace] *** Error: Unable to connect to workspace: {name} on server: {server.name}");
+                Log.Error($"[workspace] *** Unable to connect to workspace: {name} on server: {server.name}");
 
         }
 
-        private void OnWorkspaceConnection(object source, QWorkspaceConnectedArgs args)
+        private void OnWorkspaceConnected(object source, QWorkspaceConnectedArgs args)
         {
+            Log.Debug($"[workspace] Connection being finished.");
             finishConnection();
-            Console.WriteLine($"[workspace] Connection finished this is the first cue in this workspace {root.firstCue.displayName}");
         }
 
         private void OnWorkspaceDisconnected(object source, QWorkspaceDisconnectedArgs args)
         {
             //this might not be called with TCP?
-            Console.WriteLine($"[workspace] *** Workspace has indicated it is disconnecting");
+            Log.Warning($"[workspace] *** Workspace has indicated it is disconnecting");
         }
 
         private void OnCueListsUpdated(object source, QCueListsUpdatedArgs args)
@@ -399,31 +469,82 @@ namespace QSharp
                 //add Event handled? use CueUpdated one?
             }
 
-            Console.WriteLine($"[workspace] cueLists finished processing. root updated? {rootCueUpdated}");
+            Log.Debug($"[workspace] cueLists finished processing. root updated? {rootCueUpdated}");
 
-            Print();
+
+            OnWorkspaceUpdated();
         }
 
+        private void OnCueListChangedPlaybackPosition(object source, QCueListChangedPlaybackPositionArgs args)
+        {
+            QCue cueList = cueWithID(args.cueListID);
+
+            if (cueList == null)
+                return;
+            if (cueList.ignoreUpdates)
+                return;
+
+            cueList.setProperty(args.cueID, QOSCKey.PlaybackPositionId, false);
+
+            QCue selectedCue = cueWithID(args.cueID);
+            if (selectedCue != null)
+            {
+                Log.Information($"[workspace] cue list <{cueList.displayName}> playback position changed to <{selectedCue.displayName}>");
+                CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = cueList.uid, cueID = selectedCue.uid });
+
+            }
+
+
+        }
 
         //OnWorkspaceUpdated
         //OnWorkspaceSettingsUpdated
         //LightDashboardUpdated
         //PreferencesUpdated
-        //CueNeedsUpdated
-        //CueUpdated
-        //ClientShouldDisconnect
+
+        private void OnCueNeedsUpdated(object source, QCueNeedsUpdatedArgs args)
+        {
+            QCue cueToUpdate = cueWithID(args.cueID);
+            if (cueToUpdate == null)
+                return;
+
+            fetchBasicPropertiesForCue(cueToUpdate);
+        }
+
+        private void OnCueUpdated(object source, QCueUpdatedArgs args)
+        {
+            QCue cue = cueWithID(args.cueID);
+
+            if (cue == null)
+                return;
+            if (cue.ignoreUpdates)
+                return;
+
+            cue.updatePropertiesWithDictionary(args.data);
+
+        }
+
+        private void OnWorkspaceUpdated()
+        {
+            WorkspaceUpdated?.Invoke(this, new QWorkspaceUpdatedArgs());
+        }
+
         #endregion
 
+        public void Close()
+        {
+            client.Close();
+        }
 
         #region Printing
         public void Print()
         {
-            Console.WriteLine($"[workspace] {name}");
+            Log.Information($"[workspace] {name}");
             foreach (var cueList in root.cues)
             {
                 cueList.Print();
             }
-            Console.WriteLine("[workspace] End of Workspace");
+            Log.Information("[workspace] End of Workspace");
         }
         #endregion
     }

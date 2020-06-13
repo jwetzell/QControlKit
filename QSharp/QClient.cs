@@ -4,6 +4,9 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SharpOSC;
+using Serilog;
+using System.Collections.Concurrent;
+using System.ComponentModel;
 
 namespace QSharp
 {
@@ -32,7 +35,7 @@ namespace QSharp
         public QClient(string host, int port)
         {
             tcpClient = new TCPClient(host, port);
-            Console.WriteLine($"[QClient] setup connection to: <{host}:{port}>");
+            Log.Debug($"[client] setup connection to: <{host}:{port}>");
             tcpClient.MessageReceived += ProcessMessage;
         }
 
@@ -41,7 +44,10 @@ namespace QSharp
 
         public bool connect()
         {
-            return tcpClient.Connect();
+            if (tcpClient == null)
+                return false;
+            else
+                return tcpClient.Connect();
         }
 
         public void disconnect()
@@ -53,7 +59,7 @@ namespace QSharp
         public void sendMessage(string address, params object[] args)
         {
             tcpClient.Send(new OscMessage(address, args));
-           // Console.WriteLine($"QClient send message {address}");
+            Log.Debug($"[client] send message {address} : {args}");
         }
 
         private void ProcessMessage(object source, MessageEventArgs args)
@@ -64,10 +70,30 @@ namespace QSharp
             if (message.IsReply)
             {
                 JToken data = message.response;
+
                 //special case, want to update cue properties
                 if (message.IsReplyFromCue)
                 {
-                    //todo check data type?
+                    if(data.Type == JTokenType.Object)
+                    {
+                        OnCueUpdated(message.cueID, data);
+                    }
+                    else if (data.Type == JTokenType.String || data.Type == JTokenType.Integer || data.Type == JTokenType.Float)
+                    {
+                        string property = message.AddressParts.Last();
+                        if (property == null)
+                            return;
+                        //create object manually since single value replies don't have dictionaries
+                        JObject properties = new JObject();
+                        properties.Add(property, data);
+
+                        OnCueUpdated(message.cueID, properties);
+                    }
+                    else
+                    {
+                        Log.Debug($"[client] unhandled reply from cue: Type: {data.Type} value: {message.response}");
+                    }
+
                 }
                 else if (message.IsReplyFromCueLists)
                 {
@@ -86,7 +112,7 @@ namespace QSharp
                 }
                 else
                 {
-                    Console.WriteLine($"[client] unhandled reply message: {message.address}");
+                    Log.Debug($"[client] unhandled reply message: {message.address}");
                 }
             }
             else if(message.IsUpdate) {
@@ -96,7 +122,8 @@ namespace QSharp
                 }
                 else if (message.IsPlaybackPositionUpdate)
                 {
-                    OnCueListChangedPlaybackPosition(message.cueID);
+                    string cueListID = message.AddressParts[4];
+                    OnCueListChangedPlaybackPosition(cueListID, message.cueID);
                 }
                 else if (message.IsWorkspaceUpdate)
                 {
@@ -125,86 +152,81 @@ namespace QSharp
                 }
                 else if (message.IsDisconnect)
                 {
-                    Console.WriteLine($"[client] disconnect message received: {message.address}");
+                    Log.Debug($"[client] disconnect message received: {message.address}");
                     OnWorkspaceDisconnected();
                 }
                 else
                 {
-                    Console.WriteLine($"[client] unhandled update message: {message.address}");
+                    Log.Debug($"[client] unhandled update message: {message.address}");
                 }
             }
             else
             {
-                Console.WriteLine($"[client] unhandled message: {message.address}");
+                Log.Debug($"[client] unhandled message: {message.address}");
             }
         }
 
+        protected virtual void OnCueUpdated(string cueID, JToken properties)
+        {
+            Log.Debug($"[client] cue updated: {cueID}");
+            CueUpdated?.Invoke(this, new QCueUpdatedArgs { cueID = cueID, data = properties });
+        }
         protected virtual void OnCueNeedsUpdated(string cueID)
         {
-            Console.WriteLine($"[client] cue needs updated: {cueID}");
-            if (CueNeedsUpdated != null)
-                CueNeedsUpdated(this, new QCueNeedsUpdatedArgs { cueID = cueID });
+            Log.Debug($"[client] cue needs updated: {cueID}");
+            CueNeedsUpdated?.Invoke(this, new QCueNeedsUpdatedArgs { cueID = cueID });
         }
 
         protected virtual void OnCueListsUpdated(JToken response)
         {
-            Console.WriteLine($"[client] Cue Lists Updated");
-            if (CueListsUpdated != null)
-                CueListsUpdated(this, new QCueListsUpdatedArgs { data = response });
+            Log.Debug($"[client] Cue Lists Updated");
+            CueListsUpdated?.Invoke(this, new QCueListsUpdatedArgs { data = response });
         }
 
-        protected virtual void OnCueListChangedPlaybackPosition(string cueID)
+        protected virtual void OnCueListChangedPlaybackPosition(string cueListID, string cueID)
         {
-            Console.WriteLine($"[client] Playback Position Changed: {cueID}");
-            if (CueListChangedPlaybackPosition != null)
-                CueListChangedPlaybackPosition(this, new QCueListChangedPlaybackPositionArgs { cueID = cueID });
+            Log.Debug($"[client] CueList <{cueListID}> Playback Position Changed to <{cueID}>");
+            CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = cueListID, cueID = cueID });
         }
 
         protected virtual void OnWorkspaceUpdated()
         {
-            Console.WriteLine($"[client] Workspace Updated");
-            if (WorkspaceUpdated != null)
-                WorkspaceUpdated(this, new QWorkspaceUpdatedArgs());
+            Log.Debug($"[client] Workspace Updated");
+            WorkspaceUpdated?.Invoke(this, new QWorkspaceUpdatedArgs());
         }
 
         protected virtual void OnWorkspaceSettingsUpdated(string settingsType)
         {
-            Console.WriteLine($"[client] Workspace Settings Updated");
-            if (WorkspaceSettingsUpdated != null)
-                WorkspaceSettingsUpdated(this, new QWorkspaceSettingsUpdatedArgs { settingsType = settingsType});
+            Log.Debug($"[client] Workspace Settings Updated");
+            WorkspaceSettingsUpdated?.Invoke(this, new QWorkspaceSettingsUpdatedArgs { settingsType = settingsType });
         }
 
         protected virtual void OnWorkspaceLightDashboardUpdated()
         {
-            Console.WriteLine($"[client] Workspace Light Dashboard Updated");
-            if (WorkspaceLightDashboardUpdated != null)
-                WorkspaceLightDashboardUpdated(this, new QWorkspaceLightDashboardUpdatedArgs());
+            Log.Debug($"[client] Workspace Light Dashboard Updated");
+            WorkspaceLightDashboardUpdated?.Invoke(this, new QWorkspaceLightDashboardUpdatedArgs());
         }
 
         protected virtual void OnQLabPreferencesUpdated(string key)
         {
-            Console.WriteLine($"[client] QLab Preferences Updated");
-            if (QLabPreferencesUpdated != null)
-                QLabPreferencesUpdated(this, new QQLabPreferencesUpdatedArgs { key = key });
+            Log.Debug($"[client] QLab Preferences Updated");
+            QLabPreferencesUpdated?.Invoke(this, new QQLabPreferencesUpdatedArgs { key = key });
         }
 
         protected virtual void OnWorkspaceDisconnected()
         {
-            Console.WriteLine($"[client] Workspace Disconnected");
-            if (WorkspaceDisconnected != null)
-                WorkspaceDisconnected(this, new QWorkspaceDisconnectedArgs());
+            Log.Debug($"[client] Workspace Disconnected");
+            WorkspaceDisconnected?.Invoke(this, new QWorkspaceDisconnectedArgs());
         }
 
         protected virtual void OnWorkspaceConnected()
         {
-            if (WorkspaceConnected != null)
-                WorkspaceConnected(this, new QWorkspaceConnectedArgs());
+            WorkspaceConnected?.Invoke(this, new QWorkspaceConnectedArgs());
         }
 
         protected virtual void OnWorkspaceConnectionError(string status)
         {
-            if (WorkspaceConnectionError != null)
-                WorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = status});
+            WorkspaceConnectionError?.Invoke(this, new QWorkspaceConnectionErrorArgs { status = status });
         }
 
         protected virtual void OnWorkspacesUpdated(QMessage message)
@@ -219,6 +241,12 @@ namespace QSharp
                 }
                 WorkspacesUpdated(this, new QWorkspacesUpdatedArgs { Workspaces = workspaces });
             }
+        }
+
+
+        public void Close()
+        {
+            this.tcpClient.Close();
         }
 
         
