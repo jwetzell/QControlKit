@@ -6,7 +6,7 @@ using System.Text;
 
 namespace QSharp
 {
-    class QColor
+    public class QColor
     {
         public string name;
 
