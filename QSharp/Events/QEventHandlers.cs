@@ -2,6 +2,7 @@
 namespace QSharp
 {
     public delegate void QServerFoundHandler(object source, QServerFoundArgs args);
+    public delegate void QServerUpdatedHandler(object source, QServerUpdatedArgs args);
 
     public delegate void QWorkspacesUpdatedHandler(object source, QWorkspacesUpdatedArgs args);
 

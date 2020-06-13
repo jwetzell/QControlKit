@@ -58,7 +58,7 @@ namespace SharpOSC
             } 
             catch (Exception e)
             {
-                //Console.WriteLine(e.Message);
+                Console.WriteLine(e.Message);
                 return false;
             }
             
@@ -81,7 +81,10 @@ namespace SharpOSC
         {
             get
             {
-                return client.Connected;
+                if (client == null)
+                    return false;
+                else
+                    return client.Connected;
             }
         }
 
@@ -98,9 +101,9 @@ namespace SharpOSC
         {
             Random random = new Random();
             int num = random.Next(1000);
-            NetworkStream netStream = client.GetStream();
             try
             {
+                NetworkStream netStream = client.GetStream();
                 netStream.ReadTimeout = 250;
                 List<byte> responseData = new List<byte>();
                 if (netStream.CanRead)
@@ -161,14 +164,16 @@ namespace SharpOSC
 
         public void Close()
         {
-            client.GetStream().Close();
-            client.Close();
+            if(client != null || !client.Connected)
+            {
+                client.GetStream().Close();
+                client.Close();
+            }
         }
 
         protected virtual void OnMessageReceived(OscMessage msg)
         {
-            if (MessageReceived != null)
-                MessageReceived(this, new MessageEventArgs() { Message = msg });
+            MessageReceived?.Invoke(this, new MessageEventArgs() { Message = msg });
         }
     }
 }

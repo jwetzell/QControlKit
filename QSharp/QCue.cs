@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -20,7 +21,6 @@ namespace QSharp
         private bool needsNotifyCueUpdated;//?
 
         public bool ignoreUpdates;
-
 
         public QCue()
         {
@@ -45,15 +45,15 @@ namespace QSharp
             /*JToken children = dict[QOSCKey.Cues];
             if(children != null && children.Type == JTokenType.Array)
             {
-                Console.WriteLine($"[cue] new cue being created with {children.Count()} childCues");
+                Log.Debug($"[cue] new cue being created with {children.Count()} childCues");
                 foreach (var aChildDict in children)
                 {
                     string uid = (string)aChildDict[QOSCKey.UID];
-                    //Console.WriteLine($"[cue] childDict with uid: {uid} being processed");
+                    //Log.Debug($"[cue] childDict with uid: {uid} being processed");
                     if (uid == null)
                         continue;
                     string name = dict[QOSCKey.UID].ToString();
-                    Console.WriteLine($"[cue] calling new cue from {name}");
+                    Log.Debug($"[cue] calling new cue from {name}");
 
                     //QCue child = new QCue(aChildDict, workspace); 
 
@@ -130,14 +130,8 @@ namespace QSharp
         //implemented: no
         #region Class Methods
         public string iconForType(string type) { throw new NotImplementedException(); }
-        public bool cueTypeIsAudio(string type) { throw new NotImplementedException(); }
-        public bool cueTypeIsVideo(string type) { throw new NotImplementedException(); }
-        public bool cueTypeIsGroup(string type) { throw new NotImplementedException(); }
-        public bool cueTypeIsCueList(string type) { throw new NotImplementedException(); }
         public List<string> fadeModeTitles() { throw new NotImplementedException(); }
         #endregion
-
-        //KVC Compliance... do I need this?
 
         //copied: yes
         //implemented: not all
@@ -151,6 +145,11 @@ namespace QSharp
                     return new List<QCue>();
                 return cues;
             }
+
+            set
+            {
+                setProperty(value, QOSCKey.Cues);
+            }
         }
         public string parentID
         {
@@ -159,12 +158,28 @@ namespace QSharp
                 return propertyForKey(QOSCKey.Parent).ToString();
             }
         }
-        public string playbackPositionID() { throw new NotImplementedException(); }
+        public string playbackPositionID { 
+            get {
+                if (propertyForKey(QOSCKey.PlaybackPositionId) == null)
+                    return null;
+                else
+                    return propertyForKey(QOSCKey.PlaybackPositionId).ToString(); 
+            }
+            set
+            {
+                setProperty(value, QOSCKey.PlaybackPositionId);
+            }
+        }
         public string name
         {
             get
             {
                 return propertyForKey(QOSCKey.Name).ToString();
+            }
+
+            set
+            {
+                setProperty(value, QOSCKey.Name);
             }
         }
         public string number
@@ -177,12 +192,20 @@ namespace QSharp
                 else
                     return "";
             }
+            set
+            {
+                setProperty(value, QOSCKey.Number);
+            }
         }
         public string uid
         {
             get
             {
                 return propertyForKey(QOSCKey.UID).ToString();
+            }
+            set
+            {
+                setProperty(value, QOSCKey.UID);
             }
         }
         public string listName
@@ -191,12 +214,20 @@ namespace QSharp
             {
                 return propertyForKey(QOSCKey.ListName).ToString();
             }
+            set
+            {
+                setProperty(value, QOSCKey.ListName);
+            }
         }
         public string type
         {
             get
             {
                 return propertyForKey(QOSCKey.Type).ToString();
+            }
+            set
+            {
+                setProperty(value, QOSCKey.Type);
             }
         }
         public string notes
@@ -205,48 +236,109 @@ namespace QSharp
             {
                 return propertyForKey(QOSCKey.Notes).ToString();
             }
+            set
+            {
+                setProperty(value, QOSCKey.Notes);
+            }
         }
 
+        //Check the bool casting on these?
         public bool IsFlagged
         {
             get
             {
                 return (bool)propertyForKey(QOSCKey.Flagged);
             }
+            set
+            {
+                setProperty(value, QOSCKey.Flagged);
+            }
         }
         public bool IsOverridden
         {
             get
             {
-                return (bool)propertyForKey(QOSCKey.IsOverridden);
+                if (workspace.connectedToQLab3 || workspace.isOlderThanVersion("4.2.0"))
+                    return false;
+
+                bool overridden = (bool)propertyForKey(QOSCKey.IsOverridden);
+
+                if (overridden)
+                    return true;
+                foreach (var cue in cues)
+                {
+                    if (cue.IsOverridden)
+                        return true;
+                }
+                return false;
             }
         }
         public bool IsBroken
         {
             get
             {
-                return (bool)propertyForKey(QOSCKey.IsBroken);
+                if ((bool)propertyForKey(QOSCKey.IsBroken))
+                    return true;
+                foreach(var cue in cues)
+                {
+                    if (cue.IsBroken)
+                        return true;
+                }
+                return false;
             }
         }
         public bool IsRunning
         {
             get
             {
-                return (bool)propertyForKey(QOSCKey.IsRunning);
+                bool running = (bool)propertyForKey(QOSCKey.IsRunning);
+
+                if (running)
+                    return true;
+                foreach(var cue in cues)
+                {
+                    if (cue.IsRunning)
+                        return true;
+                }
+                return false;
             }
         }
         public bool IsTailingOut
         {
             get
             {
-                return (bool)propertyForKey(QOSCKey.IsTailingOut);
+                if (workspace.connectedToQLab3)
+                    return false;
+
+                bool tailingOut = (bool)propertyForKey(QOSCKey.IsTailingOut);
+
+                if (tailingOut)
+                    return true;
+                foreach(var cue in cues)
+                {
+                    if (cue.IsTailingOut)
+                        return true;
+                }
+                return false;
             }
         }
         public bool IsPanicking
         {
             get
             {
-                return (bool)propertyForKey(QOSCKey.IsPanicking);
+                if (workspace.connectedToQLab3)
+                    return false;
+
+                bool panicking = (bool)propertyForKey(QOSCKey.IsPanicking);
+
+                if (panicking)
+                    return true;
+                foreach (var cue in cues)
+                {
+                    if (cue.IsPanicking)
+                        return true;
+                }
+                return false;
             }
         }
         public bool IsGroup 
@@ -291,7 +383,6 @@ namespace QSharp
         {
             get
             {
-                //TODO
                 string nonEmptyName;
                 if (name != null && !name.Equals(""))
                     nonEmptyName = name;
@@ -337,27 +428,55 @@ namespace QSharp
                     return null;
             }
         }
-        public string surfaceName{ get { return propertyForKey("surfaceName").ToString(); } }
+        public string surfaceName{ 
+            get {
+                object property = propertyForKey("surfaceName");
+                if (property == null)
+                    return null;
+                else
+                    return propertyForKey("surfaceName").ToString(); 
+            } 
+        }
         public string patchName
         {
             get
             {
-                //TODO
-                return propertyForKey("patchDecription").ToString();
+                object property = propertyForKey("patchDescription");
+                if (property == null)
+                    return null;
+                else
+                    return propertyForKey("patchDecription").ToString();
             }
         }
 
-        //TODO: THIS IS WHERE THINGS START TO GET TRICKY!
-
-        //TODO add object color method
-        public string color { 
+        public QColor color { 
             get {
+                return new QColor(colorName);
+            }
+
+            set
+            {
+                colorName = value.name;
+            }
+        }
+
+        public string colorName
+        {
+            get
+            {
                 object col = propertyForKey(QOSCKey.ColorName);
                 if (col != null)
                     return col.ToString();
                 else
                     return "none";
-            } 
+            }
+            set
+            {
+                if (value == null)
+                    setProperty("none", QOSCKey.ColorName);
+                else
+                    setProperty(value, QOSCKey.ColorName);
+            }
         }
 
         //TODO add quaternion property and setter
@@ -369,7 +488,6 @@ namespace QSharp
         {
             get
             {
-                //TODO add null check?
                 return cueData.Keys.ToList();
             }
         }
@@ -407,25 +525,10 @@ namespace QSharp
 
                 if (!this.ignoreUpdates)
                 {
-                    //TODO: update local with QLab 
+                    //TODO: Send Cue Needs Updated
                 }
             }
         }
-        #endregion
-
-        //Copied: Yes
-        //Implemented: Not all
-        #region Mutators
-        public void setCues(List<QCue> cues)
-        {
-            
-        }
-        public void setName() { }
-        public void setNumber() { }
-        public void setUid() { }
-        public void setListName() { }
-        public void setType() { }
-        public void setFlagged() { }
         #endregion
 
         //Copied: Yes
@@ -439,7 +542,6 @@ namespace QSharp
             JObject dictObj = (JObject)dict;
             foreach (var obj in dictObj)
             {
-                //Console.WriteLine($"[cue] found property {obj.Key} ");
                 JToken value = obj.Value;
                 if (obj.Key.Equals(QOSCKey.Cues))
                 {
@@ -458,7 +560,7 @@ namespace QSharp
             if (!cueUpdated)
                 return false;
             
-            Console.WriteLine($"[cue] {nonEmptyName} has been updated.");
+            Log.Debug($"[cue] <{nonEmptyName}> has been updated.");
             //something about notifying cueUpdated ? OnCueUpdated event handler maybe?
 
             return true;
@@ -511,7 +613,6 @@ namespace QSharp
                 index++;
             }
             return needsNotifyCueUpdated;
-            //TODO: TEST?!
         }
         #endregion
 
@@ -523,13 +624,13 @@ namespace QSharp
         public List<string> allChildCueUids()
         {
             List<string> uids = new List<string>(childCuesUIDMap.Keys);
-            //TODO
             return uids;
         }
         public QCue cueAtIndex(int index)
         {
-            //TODO
-            return new QCue();
+            if (index < 0 || index >= cues.Count)
+                return null;
+            return cues[index];
         }
         public QCue cueWithID(string uid)
         {
@@ -537,7 +638,6 @@ namespace QSharp
         }
         public QCue cueWithID(string uid, bool includeChildren)
         {
-            //Console.WriteLine($"[cue] searching for cue with id: {uid} - includeChildren: {includeChildren}");
             if(childCuesUIDMap.ContainsKey(uid))
                 return childCuesUIDMap[uid];
 
@@ -552,13 +652,22 @@ namespace QSharp
                 if (childCue != null)
                     return childCue;
             }
-
             return null;
         }
         public QCue cueWithNumber(string number)
         {
-            //TODO
-            return new QCue();
+            foreach(var cue in cues)
+            {
+                if (cue.number.Equals(number))
+                    return cue;
+                if (cue.IsGroup)
+                {
+                    QCue childCue = cue.cueWithNumber(number);
+                    if (childCue != null)
+                        return childCue;
+                }
+            }
+            return null;
         }
         public object propertyForKey(string key)
         {
@@ -567,7 +676,15 @@ namespace QSharp
             {
                 return childCues;
             }
-            if (cueData.ContainsKey(key))
+            else if (key.Equals("surfaceName"))
+            {
+                //TODO
+            }
+            else if (key.Equals("patchDescription"))
+            {
+                //TODO
+            }
+            else if (cueData.ContainsKey(key))
             {
                 return cueData[key];
             }
@@ -581,7 +698,6 @@ namespace QSharp
 
         public bool setProperty(object value, string key, bool osc)
         {
-            //TODO:
             object existingValue = null;
             if(cueData.ContainsKey(key))
                 existingValue = cueData[key];
@@ -589,20 +705,14 @@ namespace QSharp
             if(existingValue != null)
             {
                 if (existingValue == value || existingValue.Equals(value))
+                    return false;
+
+
+                if (workspace.connectedToQLab3 && key.Equals(QOSCKey.Type) && existingValue.Equals(QCueType.CueList) && value.Equals(QCueType.Group))
                 {
                     return false;
                 }
             }
-
-            //Console.WriteLine($"[cue] attempting set property: {key} with type: {value.GetType()} and value: {value}");
-
-
-
-            if (workspace.connectedToQLab3 && key.Equals(QOSCKey.Type) && existingValue.Equals(QCueType.CueList) && value.Equals(QCueType.Group))
-            {
-                return false;
-            }
-
 
             if (key.Equals(QOSCKey.Cues))
             {
@@ -641,6 +751,8 @@ namespace QSharp
                 else
                     cueData.Remove(key);
 
+                //TODO: Cuelistchangedplaybackpositionid?
+
             }
             else
             {
@@ -650,22 +762,46 @@ namespace QSharp
                     cueData.Remove(key);
             }
 
-            //Console.WriteLine($"[cue] set property: {key} with type: {value.GetType()} and value: {value}");
-            //check for type key and update icon? do I want to do this here?
+
+            if (key.Equals(QOSCKey.Type))
+            {
+                //TODO: something icon related?
+            }
+
+            if (osc)
+            {
+                if (playbackPositionID == null && key.Equals(QOSCKey.PlaybackPositionId) && workspace.isOlderThanVersion("4.2.0"))
+                    value = "none";
+                workspace.updatePropertySend(this, value, key);
+            }
             return true;
         }
 
         #endregion
 
-        //TODO
-        public void sendAllPropertiesToQLab() { }
+        public void sendAllPropertiesToQLab() {
+            List<string> allProperties = propertyKeys;
+            foreach(var key in allProperties)
+            {
+                object property = propertyForKey(key);
+                if (key.Equals(QOSCKey.Cues))
+                {
+                    foreach(var cue in (List<QCue>)property)
+                    {
+                        cue.sendAllPropertiesToQLab();
+                    }
+                }
+                else
+                {
+                    workspace.updatePropertySend(this, property, key);
+                }
+            }
+        
+        }
 
         //TODO: I don't think I'll do this one
         public void pullDownPropertyForKey(string key) { }
         
-        public void setPlaybackPositionID(string cueID, bool osc) {
-            setProperty(cueID, QOSCKey.PlaybackPositionId, osc);
-        }
 
         //Methods Copied: Yes
         //Methods Implemented: Yes
@@ -685,17 +821,24 @@ namespace QSharp
 
 
         #region Printing
-        //this still needs fixing
         public void Print()
         {
-            Console.WriteLine($"{displayName} : {color}");
+            Print(0);
+        }
+        public void Print(int level)
+        {
+            string indent = new string(' ', level*2);
+
+            Log.Information($"{indent}\u00b7{displayName}");
             if (IsGroup)
             {
+                level++;
+
                 if (cues.Count() > 0)
-                {
+                {                    
                     foreach (var cue in cues)
                     {
-                        cue.Print();
+                        cue.Print(level);
                     }
                 }
             }

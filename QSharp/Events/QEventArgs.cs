@@ -8,6 +8,12 @@ namespace QSharp
     {
         public QServer server { get; set; }
     }
+
+    public class QServerUpdatedArgs : EventArgs
+    {
+        public QServer server { get; set; }
+    }
+
     public class QWorkspacesUpdatedArgs : EventArgs
     {
         public List<QWorkspaceInfo> Workspaces { get; set; }
@@ -51,7 +57,8 @@ namespace QSharp
 
     public class QCueUpdatedArgs : EventArgs
     {
-
+        public string cueID { get; set; }
+        public JToken data { get; set; }
     }
 
     public class QCueListsUpdatedArgs : EventArgs
@@ -66,6 +73,7 @@ namespace QSharp
 
     public class QCueListChangedPlaybackPositionArgs : EventArgs
     {
+        public string cueListID { get; set; }
         public string cueID { get; set; }
     }
 }
