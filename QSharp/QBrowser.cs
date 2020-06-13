@@ -1,6 +1,7 @@
 ﻿using Zeroconf;
 using System;
 using System.Collections.ObjectModel;
+using Serilog;
 
 namespace QSharp
 {
@@ -13,11 +14,8 @@ namespace QSharp
 
         public event QServerFoundHandler ServerFound;
 
-
         public QBrowser()
         {
-
-            Console.WriteLine("QBrowser Init");
             zeroconfTCPBrowser = ZeroconfResolver.CreateListener(QBonjour.TCPService);
             zeroconfTCPBrowser.ServiceFound += ZeroconfHostFound;
             zeroconfTCPBrowser.ServiceLost += ZeroconfHostLost;
@@ -25,7 +23,7 @@ namespace QSharp
 
         private void ZeroconfHostLost(object sender, IZeroconfHost e)
         {
-            Console.WriteLine($"Lost {e.DisplayName} : {e.IPAddress}");
+            Log.Information($"[browser] Lost {e.DisplayName} : {e.IPAddress}");
 
         }
 
@@ -37,13 +35,12 @@ namespace QSharp
             {
                 if (service.Key.Equals(QBonjour.TCPService))
                 {
-                    Console.WriteLine($"Found {e.DisplayName} : {e.IPAddress} : {service.Value.Port}");
+                    Log.Information($"Found {e.DisplayName} : {e.IPAddress} : {service.Value.Port}");
 
                     QServer server = serverForAddress(e.IPAddress);
 
                     if(server == null)
                     {
-                        Console.WriteLine("New Server Found so adding");
                         QServer serverToAdd = new QServer(e.IPAddress, service.Value.Port);
                         serverToAdd.name = e.DisplayName;
                         serverToAdd.zeroconfHost = e;
@@ -54,7 +51,6 @@ namespace QSharp
                     else
                     {
                         server.name = e.DisplayName;
-                        Console.WriteLine("Server already exists in list so just updating name");
                     }
                 }
             }
@@ -89,9 +85,16 @@ namespace QSharp
 
         protected virtual void OnServerFound(QServer server)
         {
-            if (ServerFound != null)
-                ServerFound(this, new QServerFoundArgs { server = server });
+            ServerFound?.Invoke(this, new QServerFoundArgs { server = server });
+        }
 
+        public void Close()
+        {
+            foreach(var server in servers)
+            {
+                server.Close();
+            }
+            zeroconfTCPBrowser.Dispose();
         }
     }
 }
