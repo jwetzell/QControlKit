@@ -13,6 +13,7 @@ namespace QSharp
         public ObservableCollection<QServer> servers = new ObservableCollection<QServer>();
 
         public event QServerFoundHandler ServerFound;
+        public event QServerUpdatedHandler ServerUpdatedWorkspaces;
 
         public QBrowser()
         {
@@ -46,6 +47,7 @@ namespace QSharp
                         serverToAdd.zeroconfHost = e;
                         servers.Add(serverToAdd);
                         serverToAdd.refreshWorkspaces();
+                        serverToAdd.ServerUpdated += OnServerUpdatedWorkspace;
                         OnServerFound(serverToAdd);
                     }
                     else
@@ -86,6 +88,11 @@ namespace QSharp
         protected virtual void OnServerFound(QServer server)
         {
             ServerFound?.Invoke(this, new QServerFoundArgs { server = server });
+        }
+
+        protected virtual void OnServerUpdatedWorkspace(object source, QServerUpdatedArgs args)
+        {
+            ServerUpdatedWorkspaces?.Invoke(this, args);
         }
 
         public void Close()
