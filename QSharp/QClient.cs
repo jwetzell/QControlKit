@@ -241,14 +241,6 @@ namespace QSharp
                 }
                 WorkspacesUpdated(this, new QWorkspacesUpdatedArgs { Workspaces = workspaces });
             }
-        }
-
-
-        public void Close()
-        {
-            this.tcpClient.Close();
-        }
-
-        
+        }       
     }
 }

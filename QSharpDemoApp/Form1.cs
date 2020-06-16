@@ -46,20 +46,38 @@ namespace QSharpDemoApp
 
         private void connectButton_Click(object sender, EventArgs e)
         {
-            if(serverListView.SelectedItems.Count == 1)
+            if(connectedWorkspace == null)
             {
-                
-                QServer server = browser.serverForAddress(serverListView.SelectedItems[0].SubItems[3].Text);
-                string workspaceID = serverListView.SelectedItems[0].SubItems[2].Text;
-                if (server != null)
+                if (serverListView.SelectedItems.Count == 1)
                 {
-                    connectedWorkspace = server.workspaceWithID(workspaceID);
-                    if(connectedWorkspace != null)
+
+                    QServer server = browser.serverForAddress(serverListView.SelectedItems[0].SubItems[3].Text);
+                    string workspaceID = serverListView.SelectedItems[0].SubItems[2].Text;
+                    if (server != null)
                     {
-                        connectedWorkspace.WorkspaceUpdated += Workspace_WorkspaceUpdated;
-                        connectedWorkspace.connectWithPasscode("");
+                        connectedWorkspace = server.workspaceWithID(workspaceID);
+                        if (connectedWorkspace != null)
+                        {
+                            connectedWorkspace.WorkspaceUpdated += Workspace_WorkspaceUpdated;
+                            connectedWorkspace.connectWithPasscode("");
+                            connectButton.Enabled = false;
+                            disconnectButton.Enabled = true;
+
+                        }
                     }
                 }
+            }
+        }
+
+        private void disconnectButton_Click(object sender, EventArgs e)
+        {
+            if (connectedWorkspace != null)
+            {
+                connectedWorkspace.disconnect();
+                connectButton.Enabled = true;
+                disconnectButton.Enabled = false;
+                connectedWorkspace = null;
+                workspaceListView.Items.Clear();
             }
         }
 

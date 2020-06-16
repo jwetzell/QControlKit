@@ -180,15 +180,16 @@ namespace QSharp
 
         public void disconnect()
         {
-            //TODO
             Log.Information($"[workspace] disconnect: {name}");
-            stopHeartbeat();
+            if (heartbeatTimer != null)
+                stopHeartbeat();
             stopReceivingUpdates();
             disconnectFromWorkspace();
 
             connected = false;
-
             client.disconnect();
+            
+            //TODO
             //root.removeAllChildCues();
 
         }
@@ -530,11 +531,6 @@ namespace QSharp
         }
 
         #endregion
-
-        public void Close()
-        {
-            client.Close();
-        }
 
         #region Printing
         public void Print()

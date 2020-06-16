@@ -71,14 +71,17 @@ namespace QSharp
         }
         #endregion
 
-        public void Close()
+        public void disconnect()
         {
             foreach (var workspace in workspaces)
             {
-                if(workspace.connected)
-                    workspace.Close();
+                if (workspace.connected)
+                {
+                    Log.Debug($"[server] Close Called For workspace: {workspace.name}");
+                    workspace.disconnect();
+                }
             }
-            client.Close();
+            client.disconnect();
         }
 
     }

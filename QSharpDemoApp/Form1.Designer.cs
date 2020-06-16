@@ -37,6 +37,7 @@
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
             this.connectButton = new System.Windows.Forms.Button();
+            this.disconnectButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // workspaceListView
@@ -47,10 +48,10 @@
             this.workspaceListView.FullRowSelect = true;
             this.workspaceListView.GridLines = true;
             this.workspaceListView.HideSelection = false;
-            this.workspaceListView.Location = new System.Drawing.Point(208, 122);
+            this.workspaceListView.Location = new System.Drawing.Point(246, 122);
             this.workspaceListView.MultiSelect = false;
             this.workspaceListView.Name = "workspaceListView";
-            this.workspaceListView.Size = new System.Drawing.Size(580, 316);
+            this.workspaceListView.Size = new System.Drawing.Size(542, 316);
             this.workspaceListView.TabIndex = 0;
             this.workspaceListView.UseCompatibleStateImageBehavior = false;
             this.workspaceListView.View = System.Windows.Forms.View.Details;
@@ -68,7 +69,7 @@
             // 
             // goButton
             // 
-            this.goButton.Location = new System.Drawing.Point(208, 47);
+            this.goButton.Location = new System.Drawing.Point(246, 47);
             this.goButton.Name = "goButton";
             this.goButton.Size = new System.Drawing.Size(104, 69);
             this.goButton.TabIndex = 1;
@@ -96,7 +97,7 @@
             this.serverListView.HideSelection = false;
             this.serverListView.Location = new System.Drawing.Point(13, 47);
             this.serverListView.Name = "serverListView";
-            this.serverListView.Size = new System.Drawing.Size(189, 391);
+            this.serverListView.Size = new System.Drawing.Size(227, 391);
             this.serverListView.TabIndex = 4;
             this.serverListView.UseCompatibleStateImageBehavior = false;
             this.serverListView.View = System.Windows.Forms.View.Details;
@@ -113,7 +114,7 @@
             // 
             // connectButton
             // 
-            this.connectButton.Location = new System.Drawing.Point(94, 21);
+            this.connectButton.Location = new System.Drawing.Point(72, 21);
             this.connectButton.Name = "connectButton";
             this.connectButton.Size = new System.Drawing.Size(75, 23);
             this.connectButton.TabIndex = 5;
@@ -121,11 +122,23 @@
             this.connectButton.UseVisualStyleBackColor = true;
             this.connectButton.Click += new System.EventHandler(this.connectButton_Click);
             // 
+            // disconnectButton
+            // 
+            this.disconnectButton.Enabled = false;
+            this.disconnectButton.Location = new System.Drawing.Point(153, 21);
+            this.disconnectButton.Name = "disconnectButton";
+            this.disconnectButton.Size = new System.Drawing.Size(75, 23);
+            this.disconnectButton.TabIndex = 5;
+            this.disconnectButton.Text = "Disconnect";
+            this.disconnectButton.UseVisualStyleBackColor = true;
+            this.disconnectButton.Click += new System.EventHandler(this.disconnectButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(842, 480);
+            this.Controls.Add(this.disconnectButton);
             this.Controls.Add(this.connectButton);
             this.Controls.Add(this.serverListView);
             this.Controls.Add(this.label1);
@@ -152,6 +165,7 @@
         private System.Windows.Forms.Button connectButton;
         private System.Windows.Forms.ColumnHeader columnHeader4;
         private System.Windows.Forms.ColumnHeader cueNameHeader;
+        private System.Windows.Forms.Button disconnectButton;
     }
 }
 

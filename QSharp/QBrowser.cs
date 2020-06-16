@@ -99,7 +99,7 @@ namespace QSharp
         {
             foreach(var server in servers)
             {
-                server.Close();
+                server.disconnect();
             }
             zeroconfTCPBrowser.Dispose();
         }

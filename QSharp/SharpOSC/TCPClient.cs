@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 using System.Threading;
+using Serilog;
 
 namespace SharpOSC
 {
@@ -30,7 +31,7 @@ namespace SharpOSC
         }
         public delegate void MessageReceivedHandler(object source, MessageEventArgs args);
         public event MessageReceivedHandler MessageReceived;
-
+        private Thread receivingThread;
         string _address;
         TcpClient client;
 
@@ -51,9 +52,9 @@ namespace SharpOSC
             try
             {
                 client = new TcpClient(Address, Port);
-                Thread receivingThread = new Thread(ReceiveLoop);
+                receivingThread = new Thread(ReceiveLoop);
                 receivingThread.Start();
-                //Console.WriteLine($"TCPClient - connected to <{Address}:{Port}>");
+                Console.WriteLine($"[tcpclient] connected to <{Address}:{Port}>");
                 return true;
             } 
             catch (Exception e)
@@ -94,7 +95,7 @@ namespace SharpOSC
             {
                 Receive();
             }
-            Console.WriteLine("TCPClient - Receive Loop has exited for some reason");
+            //Log.Debug("[tcpclient] - ReceiveLoop has exited");
         }
 
         public void Receive()
@@ -164,10 +165,13 @@ namespace SharpOSC
 
         public void Close()
         {
-            if(client != null || !client.Connected)
+            if (client != null)
             {
-                client.GetStream().Close();
-                client.Close();
+                if (client.Connected)
+                {
+                    client.GetStream().Close();
+                    client.Close();
+                }
             }
         }
 
