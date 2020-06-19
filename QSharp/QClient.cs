@@ -83,6 +83,11 @@ namespace QSharp
                         string property = message.AddressParts.Last();
                         if (property == null)
                             return;
+                        if (property == QOSCKey.PlaybackPositionId)
+                        {
+                            OnCueListChangedPlaybackPosition(message.cueID, data.ToString());
+                            return;
+                        }
                         //create object manually since single value replies don't have dictionaries
                         JObject properties = new JObject();
                         properties.Add(property, data);
