@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using QSharp;
 using QSharpXamDemo.ViewModels;
 using Serilog;
+using Xamarin.Essentials;
 using Xamarin.Forms;
 
 namespace QSharpXamDemo
@@ -49,11 +50,11 @@ namespace QSharpXamDemo
                         {
                             Grid cueGrid = cueToGrid(aCue);
                             cueGridDict.Add(aCue.uid, cueGrid);
-                            Device.BeginInvokeOnMainThread(() =>
+                            MainThread.InvokeOnMainThreadAsync(() =>
                             {
                                 cueListsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                                 cueListsGrid.Children.Add(cueGrid, 0, aCue.sortIndex);
-                            });
+                            }).Wait();
                         });
 
                         cueAddTask.Start();
@@ -106,26 +107,27 @@ namespace QSharpXamDemo
             int rows = 1;
             if (cue.cues.Count > 0)
             {
-                    foreach (var aCue in cue.cues)
-                    {
-                        cueGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                        var aCueGrid = cueToGrid(aCue);
-                        cueGridDict.Add(aCue.uid, aCueGrid);
+                foreach (var aCue in cue.cues)
+                {
+                    cueGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                    var aCueGrid = cueToGrid(aCue);
+                    cueGridDict.Add(aCue.uid, aCueGrid);
 
-                        aCueGrid.Margin = new Thickness(10, 0, 0, 0);
-                        cueGrid.Children.Add(aCueGrid, 0, aCue.sortIndex + 1);
-                        rows++;
-                    }
+                    aCueGrid.Margin = new Thickness(10, 0, 0, 0);
+                    cueGrid.Children.Add(aCueGrid, 0, aCue.sortIndex + 1);
+                    rows++;
+                }
 
-                    var cueFrame = new Frame
-                    {
-                        BackgroundColor = Color.Transparent,
-                        BorderColor = Color.Black
-                    };
+                //this doesn't work to outline group?
+                /*var cueFrame = new Frame
+                {
+                    BackgroundColor = Color.Transparent,
+                    BorderColor = Color.Black
+                };
 
-                    cueGrid.Children.Add(cueFrame);
-                    Grid.SetRowSpan(cueFrame, rows);
-                
+                cueGrid.Children.Add(cueFrame);
+                Grid.SetRowSpan(cueFrame, rows);*/
+
             }
             return cueGrid;
         }
