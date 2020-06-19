@@ -47,7 +47,7 @@ namespace QSharp
 
     }
 
-    static class QOSCKey
+    public static class QOSCKey
     {
         public const string UID = "uniqueID";
         public const string Type = "type";
