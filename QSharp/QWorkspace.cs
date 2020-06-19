@@ -436,7 +436,6 @@ namespace QSharp
                 }
                 currentCueLists.Add(cueList);
                 index++;
-                valueForKey(cueList,QOSCKey.PlaybackPositionId);
             }
             QCue activeCuesList = root.cueWithID(QIdentifiers.ActiveCues, false);
             if(activeCuesList != null)

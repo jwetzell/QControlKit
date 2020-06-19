@@ -1,5 +1,6 @@
 ﻿
 using System.Collections.Generic;
+using System.Security;
 using System.Threading.Tasks;
 using QSharp;
 using QSharpXamDemo.ViewModels;
@@ -11,6 +12,7 @@ namespace QSharpXamDemo
     public partial class CueListPage : ContentPage
     {
         private QWorkspace connectedWorkspace;
+        private Dictionary<string, Grid> cueGridDict = new Dictionary<string, Grid>();
         public CueListPage(QWorkspace workspace)
         {
             InitializeComponent();
@@ -27,6 +29,9 @@ namespace QSharpXamDemo
             Device.BeginInvokeOnMainThread(() =>
             {
                 selectedCueGrid.BindingContext = new SelectedQCueViewModel(connectedWorkspace.cueWithID(args.cueID));
+
+                if(cueGridDict.ContainsKey(args.cueID))
+                    cueListScrollView.ScrollToAsync(cueGridDict[args.cueID].X, cueGridDict[args.cueID].Y, true);
             });
         }
 
@@ -43,6 +48,7 @@ namespace QSharpXamDemo
                         var cueAddTask = new Task(() =>
                         {
                             Grid cueGrid = cueToGrid(aCue);
+                            cueGridDict.Add(aCue.uid, cueGrid);
                             Device.BeginInvokeOnMainThread(() =>
                             {
                                 cueListsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -53,6 +59,10 @@ namespace QSharpXamDemo
                         cueAddTask.Start();
                         cueAddTasks.Add(cueAddTask);
                     }
+                    Task.WhenAll(cueAddTasks).ContinueWith((task) =>
+                    {
+                        connectedWorkspace.valueForKey(cue, QOSCKey.PlaybackPositionId); //fetch playback position for cueList once all cue loading is done.
+                    });
                     break; //only load first cue list with cues.
                 }
             }
@@ -100,6 +110,8 @@ namespace QSharpXamDemo
                     {
                         cueGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                         var aCueGrid = cueToGrid(aCue);
+                        cueGridDict.Add(aCue.uid, aCueGrid);
+
                         aCueGrid.Margin = new Thickness(10, 0, 0, 0);
                         cueGrid.Children.Add(aCueGrid, 0, aCue.sortIndex + 1);
                         rows++;

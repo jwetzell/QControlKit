@@ -10,7 +10,8 @@
             <RowDefinition Height="200"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <ScrollView Grid.Row="1">
+        <ScrollView x:Name="cueListScrollView" 
+                    Grid.Row="1">
             <Grid x:Name="cueListsGrid"
           RowSpacing="0"
           ColumnSpacing="0"
