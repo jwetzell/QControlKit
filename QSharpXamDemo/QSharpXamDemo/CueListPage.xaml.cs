@@ -31,14 +31,16 @@ namespace QSharpXamDemo
             {
                 selectedCueGrid.BindingContext = new SelectedQCueViewModel(connectedWorkspace.cueWithID(args.cueID));
 
-                if(cueGridDict.ContainsKey(args.cueID))
-                    cueListScrollView.ScrollToAsync(cueGridDict[args.cueID].X, cueGridDict[args.cueID].Y, true);
+                if (cueGridDict.ContainsKey(args.cueID))
+                {
+                    var cueGrid = cueGridDict[args.cueID]; //element to scroll to
+                    cueListScrollView.ScrollToAsync(cueGrid, ScrollToPosition.Center, true);
+                }
             });
         }
 
         void Workspace_WorkspaceUpdated(object source, QWorkspaceUpdatedArgs args)
         {
-            Log.Debug("[demo] Workspace has been updated");
             foreach (var cue in connectedWorkspace.cueLists)
             {
                 if(cue.cues.Count > 0)
@@ -46,24 +48,15 @@ namespace QSharpXamDemo
                     List<Task> cueAddTasks = new List<Task>();
                     foreach(var aCue in cue.cues)
                     {
-                        var cueAddTask = new Task(() =>
+                        Grid cueGrid = cueToGrid(aCue);
+                        cueGridDict.Add(aCue.uid, cueGrid);
+                        MainThread.InvokeOnMainThreadAsync(() =>
                         {
-                            Grid cueGrid = cueToGrid(aCue);
-                            cueGridDict.Add(aCue.uid, cueGrid);
-                            MainThread.InvokeOnMainThreadAsync(() =>
-                            {
-                                cueListsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                                cueListsGrid.Children.Add(cueGrid, 0, aCue.sortIndex);
-                            }).Wait();
-                        });
-
-                        cueAddTask.Start();
-                        cueAddTasks.Add(cueAddTask);
+                            cueListsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                            cueListsGrid.Children.Add(cueGrid, 0, aCue.sortIndex);
+                        }).Wait();
                     }
-                    Task.WhenAll(cueAddTasks).ContinueWith((task) =>
-                    {
-                        connectedWorkspace.valueForKey(cue, QOSCKey.PlaybackPositionId); //fetch playback position for cueList once all cue loading is done.
-                    });
+                    connectedWorkspace.valueForKey(cue, QOSCKey.PlaybackPositionId); //fetch playback position for cueList once all cue loading is done.
                     break; //only load first cue list with cues.
                 }
             }
@@ -85,7 +78,7 @@ namespace QSharpXamDemo
             var cueBackground = new Frame
             {
                 BindingContext = qCueViewModel,
-                Opacity = 0.60,
+                Opacity = 0.50,
                 HasShadow = false,
                 CornerRadius = 0,
                 BorderColor = Color.Black
@@ -112,21 +105,19 @@ namespace QSharpXamDemo
                     cueGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
                     var aCueGrid = cueToGrid(aCue);
                     cueGridDict.Add(aCue.uid, aCueGrid);
-
                     aCueGrid.Margin = new Thickness(10, 0, 0, 0);
                     cueGrid.Children.Add(aCueGrid, 0, aCue.sortIndex + 1);
                     rows++;
                 }
 
-                //this doesn't work to outline group?
-                /*var cueFrame = new Frame
+                var cueFrame = new Frame
                 {
                     BackgroundColor = Color.Transparent,
                     BorderColor = Color.Black
                 };
 
                 cueGrid.Children.Add(cueFrame);
-                Grid.SetRowSpan(cueFrame, rows);*/
+                Grid.SetRowSpan(cueFrame, rows);
 
             }
             return cueGrid;
