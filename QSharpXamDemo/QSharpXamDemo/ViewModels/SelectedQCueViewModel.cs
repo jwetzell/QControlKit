@@ -31,6 +31,19 @@ namespace QSharpXamDemo.ViewModels
             }
         }
 
+        public string number
+        {
+            get
+            {
+                return cue.number;
+            }
+
+            set
+            {
+                cue.number = value;
+            }
+        }
+
         public Color color
         {
             get

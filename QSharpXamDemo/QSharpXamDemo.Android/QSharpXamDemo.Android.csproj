@@ -16,7 +16,6 @@
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
     <MonoAndroidAssetsPrefix>Assets</MonoAndroidAssetsPrefix>
-    <AndroidUseLatestPlatformSdk>false</AndroidUseLatestPlatformSdk>
     <TargetFrameworkVersion>v9.0</TargetFrameworkVersion>
     <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
     <AndroidUseAapt2>true</AndroidUseAapt2>
@@ -97,7 +96,7 @@
       <Name>QSharp</Name>
     </ProjectReference>
     <ProjectReference Include="..\QSharpXamDemo\QSharpXamDemo.csproj">
-      <Project>{48097AD8-2188-4F99-8092-E4EFD7571268}</Project>
+      <Project>{20D2D0D8-A518-42DC-BAB8-CF098CDF03C4}</Project>
       <Name>QSharpXamDemo</Name>
     </ProjectReference>
   </ItemGroup>

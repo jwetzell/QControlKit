@@ -29,12 +29,25 @@ namespace QSharpXamDemo.ViewModels
         public string name { 
             get
             {
-                return cue.nonEmptyName;
+                return cue.displayName;
             }
 
             set
             {
                 cue.name = value;
+            }
+        }
+
+        public string number
+        {
+            get
+            {
+                return cue.number;
+            }
+
+            set
+            {
+                cue.number = value;
             }
         }
 

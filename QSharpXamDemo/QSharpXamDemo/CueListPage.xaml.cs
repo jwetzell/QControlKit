@@ -1,21 +1,13 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
-using System.Net.Http.Headers;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using System.Xml;
 using QSharp;
 using QSharpXamDemo.ViewModels;
 using Serilog;
-using Xamarin.Essentials;
 using Xamarin.Forms;
-using Xamarin.Forms.Xaml;
 
 namespace QSharpXamDemo
 {
-    [XamlCompilation(XamlCompilationOptions.Compile)]
     public partial class CueListPage : ContentPage
     {
         private QWorkspace connectedWorkspace;
@@ -76,15 +68,16 @@ namespace QSharpXamDemo
             {
                 BindingContext = qCueViewModel,
                 HorizontalOptions = LayoutOptions.StartAndExpand,
-                VerticalTextAlignment = TextAlignment.Center
+                VerticalTextAlignment = TextAlignment.Center,
             };
             cueLabel.SetBinding(Label.TextProperty, "name", BindingMode.OneWay);
             var cueBackground = new Frame
             {
                 BindingContext = qCueViewModel,
-                Opacity = 0.75,
+                Opacity = 0.60,
                 HasShadow = false,
                 CornerRadius = 0,
+                BorderColor = Color.Black
             };
             cueBackground.SetBinding(BackgroundColorProperty, "color",BindingMode.OneWay);
 
