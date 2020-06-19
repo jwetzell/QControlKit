@@ -14,7 +14,7 @@ namespace QSharp
         private QServer server;
         private QClient client;
 
-        public string name;
+        public string name { get; set; }
         public string uniqueID;
         public bool connected;
         public bool hasPasscode;
@@ -436,8 +436,8 @@ namespace QSharp
                 }
                 currentCueLists.Add(cueList);
                 index++;
+                valueForKey(cueList,QOSCKey.PlaybackPositionId);
             }
-
             QCue activeCuesList = root.cueWithID(QIdentifiers.ActiveCues, false);
             if(activeCuesList != null)
             {
@@ -463,7 +463,7 @@ namespace QSharp
             if (root.cues.Count() != currentCueLists.Count())
                 rootCueUpdated = true;
 
-            root.setProperty(currentCueLists, QOSCKey.Cues);
+            root.setProperty(currentCueLists, QOSCKey.Cues, false) ;
 
             if (rootCueUpdated)
             {

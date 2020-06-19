@@ -12,9 +12,9 @@ namespace QSharp
 
         private QClient client;
 
-        public string host;
-        public int port;
-        public string name;
+        public string host { get; set; }
+        public int port { get; set; }
+        public string name { get; set; }
         public IZeroconfHost zeroconfHost;
         public List<QWorkspace> workspaces = new List<QWorkspace>();
 

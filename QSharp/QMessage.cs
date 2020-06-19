@@ -116,7 +116,7 @@ namespace QSharp
         public string replyAddress { get{ return IsReply ? address.Substring("/reply".Length) : address; } }
 
 
-        public string[] AddressParts { get { return address.Split("/",StringSplitOptions.RemoveEmptyEntries); } }
+        public string[] AddressParts { get { return address.Split(new char[] { '/' },StringSplitOptions.RemoveEmptyEntries); } }
 
         public JToken response
         {
