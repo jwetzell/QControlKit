@@ -1,4 +1,5 @@
 ﻿using QSharp;
+using Serilog;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Xamarin.Forms;
@@ -10,10 +11,27 @@ namespace QSharpXamDemo.ViewModels
         bool isSelected = false;
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public QCueViewModel(QCue cue)
+        public QCueViewModel(QCue cue, bool checkPlayback)
         {
             this.cue = cue;
-            this.cue.workspace.CueListChangedPlaybackPosition += Workspace_CueListChangedPlaybackPosition;
+            if(checkPlayback)
+                this.cue.workspace.CueListChangedPlaybackPosition += Workspace_CueListChangedPlaybackPosition;
+            this.cue.CuePropertiesUpdated += OnCuePropertiesUpdated;
+        }
+
+        private void OnCuePropertiesUpdated(object source, QCuePropertiesUpdatedArgs args)
+        {
+            foreach(var property in args.properties)
+            {
+                Log.Debug($"[cueviewmodel] property <{property}> has been updated.");
+                if (property.Equals(QOSCKey.Name))
+                {
+                    OnPropertyChanged("name");
+                }else if (property.Equals(QOSCKey.ColorName))
+                {
+                    OnPropertyChanged("color");
+                }
+            }
         }
 
         void OnPropertyChanged([CallerMemberName] string name = "")

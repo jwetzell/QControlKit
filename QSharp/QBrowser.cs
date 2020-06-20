@@ -1,5 +1,4 @@
 ﻿using Zeroconf;
-using System;
 using System.Collections.ObjectModel;
 using Serilog;
 

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-
-namespace QSharp
+﻿namespace QSharp
 {
     public class QColor
     {

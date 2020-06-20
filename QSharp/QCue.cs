@@ -22,6 +22,8 @@ namespace QSharp
 
         public bool ignoreUpdates;
 
+        public event QCuePropertiesUpdatedHandler CuePropertiesUpdated;
+
         public QCue()
         {
             init();
@@ -540,6 +542,7 @@ namespace QSharp
 
             //TODO
             JObject dictObj = (JObject)dict;
+            List<string> propertiesUpdated = new List<string>();
             foreach (var obj in dictObj)
             {
                 JToken value = obj.Value;
@@ -553,16 +556,17 @@ namespace QSharp
                 {
                     bool didSetProptery = setProperty(value, obj.Key, false);
                     if (didSetProptery)
+                    {
                         cueUpdated = true;
+                        propertiesUpdated.Add(obj.Key);
+                    }
                 }
             }
 
             if (!cueUpdated)
                 return false;
             
-            Log.Debug($"[cue] <{nonEmptyName}> has been updated.");
-            //something about notifying cueUpdated ? OnCueUpdated event handler maybe?
-
+            OnCuePropertiesUpdated(propertiesUpdated);
             return true;
         }
 
@@ -817,6 +821,16 @@ namespace QSharp
         public void togglePause() { workspace.togglePauseCue(this);  }
         public void preview() { workspace.previewCue(this);  }
         public void panic() { workspace.panicCue(this); }
+        #endregion
+
+
+
+        #region Event Handling
+        void OnCuePropertiesUpdated(List<string> properties)
+        {
+            Log.Debug($"[cue] <{nonEmptyName}> properties have been updated.");
+            CuePropertiesUpdated?.Invoke(this, new QCuePropertiesUpdatedArgs { properties = properties });
+        } 
         #endregion
 
 

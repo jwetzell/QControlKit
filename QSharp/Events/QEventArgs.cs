@@ -61,6 +61,11 @@ namespace QSharp
         public JToken data { get; set; }
     }
 
+    public class QCuePropertiesUpdatedArgs : EventArgs
+    {
+        public List<string> properties { get; set; }
+    }
+
     public class QCueListsUpdatedArgs : EventArgs
     {
         public JToken data { get; set; }

@@ -1,6 +1,5 @@
 ﻿
 using System.Collections.Generic;
-using System.Security;
 using System.Threading.Tasks;
 using QSharp;
 using QSharpXamDemo.ViewModels;
@@ -29,7 +28,7 @@ namespace QSharpXamDemo
         {
             Device.BeginInvokeOnMainThread(() =>
             {
-                selectedCueGrid.BindingContext = new SelectedQCueViewModel(connectedWorkspace.cueWithID(args.cueID));
+                selectedCueGrid.BindingContext = new QCueViewModel(connectedWorkspace.cueWithID(args.cueID), false);
 
                 if (cueGridDict.ContainsKey(args.cueID))
                 {
@@ -65,7 +64,7 @@ namespace QSharpXamDemo
         Grid cueToGrid(QCue cue)
         {
             Grid cueGrid = new Grid { RowSpacing = 0 };
-            QCueViewModel qCueViewModel = new QCueViewModel(cue);
+            QCueViewModel qCueViewModel = new QCueViewModel(cue, true);
             cueGrid.RowDefinitions = new RowDefinitionCollection();
             cueGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(40) });
             var cueLabel = new Label

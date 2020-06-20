@@ -1,5 +1,4 @@
-﻿
-namespace QSharp
+﻿namespace QSharp
 {
     public delegate void QServerFoundHandler(object source, QServerFoundArgs args);
     public delegate void QServerUpdatedHandler(object source, QServerUpdatedArgs args);
@@ -16,6 +15,7 @@ namespace QSharp
 
 
     public delegate void QCueUpdatedHandler(object source, QCueUpdatedArgs args);
+    public delegate void QCuePropertiesUpdatedHandler(object source, QCuePropertiesUpdatedArgs args);
     public delegate void QCueListsUpdatesHandler(object source, QCueListsUpdatedArgs args);
     public delegate void QCueNeedsUpdatedHandler(object source, QCueNeedsUpdatedArgs args);
     public delegate void QCueListChangedPlaybackPositionHandler(object source, QCueListChangedPlaybackPositionArgs args);
