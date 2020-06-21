@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <Authors>Joel Wetzell</Authors>
+    <Version>1.0.0-devel</Version>
   </PropertyGroup>
 
   <ItemGroup>
