@@ -2,13 +2,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30128.74
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QSharp", "QSharp\QSharp.csproj", "{51CD2579-79C9-49A9-B68D-93CBE878BAA1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QControlKit", "QControlKit\QControlKit.csproj", "{51CD2579-79C9-49A9-B68D-93CBE878BAA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QSharpXamDemo.Android", "QSharpXamDemo\QSharpXamDemo.Android\QSharpXamDemo.Android.csproj", "{4F7F13C7-85EF-431F-AB03-B2494F0F4C7F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QControlKitXamDemo.Android", "QControlKitXamDemo\QControlKitXamDemo.Android\QControlKitXamDemo.Android.csproj", "{4F7F13C7-85EF-431F-AB03-B2494F0F4C7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QSharpXamDemo.iOS", "QSharpXamDemo\QSharpXamDemo.iOS\QSharpXamDemo.iOS.csproj", "{9A10344E-F9FB-4319-9665-CB7E78FCF4F4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QControlKitXamDemo.iOS", "QControlKitXamDemo\QControlKitXamDemo.iOS\QControlKitXamDemo.iOS.csproj", "{9A10344E-F9FB-4319-9665-CB7E78FCF4F4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QSharpXamDemo", "QSharpXamDemo\QSharpXamDemo\QSharpXamDemo.csproj", "{20D2D0D8-A518-42DC-BAB8-CF098CDF03C4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QControlKitXamDemo", "QControlKitXamDemo\QControlKitXamDemo\QControlKitXamDemo.csproj", "{20D2D0D8-A518-42DC-BAB8-CF098CDF03C4}"
 	ProjectSection(ProjectDependencies) = postProject
 		{51CD2579-79C9-49A9-B68D-93CBE878BAA1} = {51CD2579-79C9-49A9-B68D-93CBE878BAA1}
 	EndProjectSection
