@@ -1,5 +1,4 @@
-﻿
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using QControlKit;
 using QControlKitXamDemo.ViewModels;
@@ -12,15 +11,37 @@ namespace QControlKitXamDemo
     {
         private QWorkspace connectedWorkspace;
         private Dictionary<string, Grid> cueGridDict = new Dictionary<string, Grid>();
-        public CueListPage(QWorkspace workspace)
+        public CueListPage(QWorkspace workspace, string passcode = null)
         {
             InitializeComponent();
-
             connectedWorkspace = workspace;
             connectedWorkspace.WorkspaceUpdated += Workspace_WorkspaceUpdated;
-            connectedWorkspace.connectWithPasscode("1234");
+            connectedWorkspace.WorkspaceConnectionError += ConnectedWorkspace_WorkspaceConnectionError;
+            connectedWorkspace.connect(passcode);
             connectedWorkspace.defaultSendUpdatesOSC = true;
             connectedWorkspace.CueListChangedPlaybackPosition += ConnectedWorkspace_CueListChangedPlaybackPosition;
+        }
+
+        protected override void OnDisappearing()
+        {
+            base.OnDisappearing();
+            connectedWorkspace.disconnect();
+            connectedWorkspace.WorkspaceUpdated -= Workspace_WorkspaceUpdated;
+            connectedWorkspace.WorkspaceConnectionError -= ConnectedWorkspace_WorkspaceConnectionError;
+            connectedWorkspace.CueListChangedPlaybackPosition -= ConnectedWorkspace_CueListChangedPlaybackPosition;
+        }
+
+        private async void ConnectedWorkspace_WorkspaceConnectionError(object source, QWorkspaceConnectionErrorArgs args)
+        {
+            System.Console.WriteLine("WorkspaceConnectionError Called");
+            if (args.status.Equals("badpass"))
+            {
+                string passcode = await DisplayPromptAsync("Passcode was incorrect.", "Try Again", maxLength: 4, keyboard: Keyboard.Numeric);
+                if (passcode != null)
+                {
+                    connectedWorkspace.connect(passcode);
+                }
+            }
         }
 
         void ConnectedWorkspace_CueListChangedPlaybackPosition(object source, QCueListChangedPlaybackPositionArgs args)

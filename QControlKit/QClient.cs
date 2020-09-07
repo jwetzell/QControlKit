@@ -93,7 +93,7 @@ namespace QControlKit
                     }
                     else
                     {
-                        Log.Debug($"[client] unhandled reply from cue: Type: {data.Type} value: {message.response}");
+                        Log.Warning($"[client] unhandled reply from cue: Type: {data.Type} value: {message.response}");
                     }
 
                 }
@@ -107,6 +107,7 @@ namespace QControlKit
                 }
                 else if (message.IsConnect)
                 {
+                    //Log.Debug($"[client] Connection message received: {message.response}");
                     if (message.response.ToString() == "ok")
                         OnWorkspaceConnected();
                     else
@@ -114,7 +115,7 @@ namespace QControlKit
                 }
                 else
                 {
-                    Log.Debug($"[client] unhandled reply message: {message.address}");
+                    Log.Warning($"[client] unhandled reply message: {message.address}");
                 }
             }
             else if(message.IsUpdate) {
@@ -154,17 +155,16 @@ namespace QControlKit
                 }
                 else if (message.IsDisconnect)
                 {
-                    Log.Debug($"[client] disconnect message received: {message.address}");
                     OnWorkspaceDisconnected();
                 }
                 else
                 {
-                    Log.Debug($"[client] unhandled update message: {message.address}");
+                    Log.Warning($"[client] unhandled update message: {message.address}");
                 }
             }
             else
             {
-                Log.Debug($"[client] unhandled message: {message.address}");
+                Log.Warning($"[client] unhandled message: {message.address}");
             }
         }
 

@@ -25,9 +25,26 @@ namespace QControlKitXamDemo
 
         async void ServerListView_ItemSelected(object sender, SelectedItemChangedEventArgs e)
         {
-            QWorkspace selectedWorkspace = e.SelectedItem as QWorkspace;
-            Console.WriteLine($"[demo] workspace: {selectedWorkspace.nameWithoutPathExtension} has been selected");
-            await Navigation.PushAsync(new CueListPage(selectedWorkspace));
+            if(e.SelectedItem != null)
+            {
+                QWorkspace selectedWorkspace = e.SelectedItem as QWorkspace;
+                Console.WriteLine($"[demo] workspace: {selectedWorkspace.nameWithoutPathExtension} has been selected");
+                if (selectedWorkspace.hasPasscode)
+                {
+                    string passcode = await DisplayPromptAsync("Workspace has passcode", "Enter Passcode", maxLength: 4, keyboard: Keyboard.Numeric);
+                    if (passcode != null)
+                    {
+
+                        await Navigation.PushAsync(new CueListPage(selectedWorkspace, passcode));
+                    }
+                }
+                else
+                {
+                    await Navigation.PushAsync(new CueListPage(selectedWorkspace));
+
+                }
+                serverListView.SelectedItem = null;
+            }
         }
 
         private void Browser_ServerUpdatedWorkspaces(object source, QServerUpdatedArgs args)

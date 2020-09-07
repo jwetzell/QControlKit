@@ -1,4 +1,4 @@
-﻿//TODO: connect methods, cue property fetch methods, everything else
+﻿//TODO: workspace connection error handlers
 using Newtonsoft.Json;
 using Serilog;
 using System;
@@ -32,6 +32,8 @@ namespace QControlKit
 
         public event QWorkspaceUpdatedHandler WorkspaceUpdated;
         public event QCueListChangedPlaybackPositionHandler CueListChangedPlaybackPosition;
+        public event QWorkspaceConnectionErrorHandler WorkspaceConnectionError;
+
         private void Init()
         {
             name = "";
@@ -52,9 +54,6 @@ namespace QControlKit
 
         public QWorkspace(QWorkspaceInfo workspaceInfo, QServer server)
         {
-
-            
-
             if (workspaceInfo.version.Length > 0)
                 version = workspaceInfo.version;
 
@@ -143,19 +142,30 @@ namespace QControlKit
 
         #region Connection/reconnection
 
-        public void connectWithPasscode(string passcode)
+        public void connect(string passcode = null)
         {
-            //TODO
+            Log.Debug($"[workspace] connecting to {this.server.host} with passcode: {passcode}");
+
+            if(hasPasscode && passcode == null)
+            {
+                Log.Error($"[workspace] *** workspace <{name}> requires a passcode but none was supplied.");
+                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = "badpass" });
+                return;
+            }
+
             if (!client.connect())
             {
-                Log.Error($"[workspace] *** Error: couldn't connect to server client is not connected");
+                Log.Error($"[workspace] *** couldn't connect to server client is not connected");
                 return;
             }
 
             //save password for reuse
             this.passcode = passcode;
             Log.Information("[workspace] connecting...");
-            client.sendMessage($"{workspacePrefix}/connect",passcode);
+            if (passcode != null)
+                client.sendMessage($"{workspacePrefix}/connect", passcode);
+            else
+                client.sendMessage($"{workspacePrefix}/connect");
         }
 
         private void finishConnection()
@@ -173,7 +183,10 @@ namespace QControlKit
         {
             if (connected)
                 return;
-            connectWithPasscode(passcode);
+            if(hasPasscode)
+                connect(passcode);
+            else
+                connect();
 
             //todo
         }
@@ -384,12 +397,15 @@ namespace QControlKit
             if (args.status.Equals("badpass"))
             {
                 //clear passcode if there was one set in the connect() method
-                this.passcode = "";
+                this.passcode = null;
                 Log.Error($"[workspace] *** Password for workspace {name} was incorrect!");
-            }                
+            }
             else
+            {
                 Log.Error($"[workspace] *** Unable to connect to workspace: {name} on server: {server.name}");
+            }
 
+            WorkspaceConnectionError?.Invoke(this, new QWorkspaceConnectionErrorArgs { status = args.status });
         }
 
         private void OnWorkspaceConnected(object source, QWorkspaceConnectedArgs args)
