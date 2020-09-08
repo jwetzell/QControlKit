@@ -1,4 +1,4 @@
-﻿//General information about a QLab Workspace
+﻿//General information about a QLab Workspace retrieves by /workspaces
 namespace QControlKit
 {
     public class QWorkspaceInfo

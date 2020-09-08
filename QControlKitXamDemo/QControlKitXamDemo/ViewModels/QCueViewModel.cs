@@ -1,8 +1,11 @@
 ﻿using QControlKit;
-using Serilog;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Xamarin.Forms;
+
+using QControlKit.Events;
+using QControlKit.Constants;
+
 namespace QControlKitXamDemo.ViewModels
 {
     public class QCueViewModel : INotifyPropertyChanged
@@ -23,7 +26,7 @@ namespace QControlKitXamDemo.ViewModels
         {
             foreach(var property in args.properties)
             {
-                Log.Debug($"[cueviewmodel] property <{property}> has been updated.");
+                //Log.Debug($"[cueviewmodel] property <{property}> has been updated.");
                 if (property.Equals(QOSCKey.Name))
                 {
                     OnPropertyChanged("name");

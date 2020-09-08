@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Zeroconf;
 
+using QControlKit.Events;
+
 namespace QControlKit
 {
     public class QServer
@@ -13,6 +15,7 @@ namespace QControlKit
         public string host { get; set; }
         public int port { get; set; }
         public string name { get; set; }
+        public string version { get; set; }
         public IZeroconfHost zeroconfHost;
         public List<QWorkspace> workspaces = new List<QWorkspace>();
 
@@ -58,6 +61,9 @@ namespace QControlKit
                 {
                     QWorkspace workspaceToAdd = new QWorkspace(workspace, this);
                     workspaces.Add(workspaceToAdd);
+                    //set server version to the version of first workspace found...kind of hacky but eh
+                    if (version == null)
+                        version = workspaceToAdd.version;
                 }
             }
             OnServerUpdated(this);
@@ -75,7 +81,7 @@ namespace QControlKit
             {
                 if (workspace.connected)
                 {
-                    Log.Debug($"[server] Close Called For workspace: {workspace.name}");
+                    Log.Debug($"[server] Closing workspace <{workspace.name}> still connected to {name}");
                     workspace.disconnect();
                 }
             }

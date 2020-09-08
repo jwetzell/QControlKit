@@ -1,6 +1,10 @@
-﻿using Zeroconf;
+﻿//TODO period updating of servers, proper server removing/workspace updating
+using Zeroconf;
 using System.Collections.ObjectModel;
 using Serilog;
+
+using QControlKit.Constants;
+using QControlKit.Events;
 
 namespace QControlKit
 {

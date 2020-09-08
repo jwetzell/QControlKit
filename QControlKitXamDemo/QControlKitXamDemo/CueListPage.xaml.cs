@@ -5,6 +5,9 @@ using QControlKitXamDemo.ViewModels;
 using Xamarin.Essentials;
 using Xamarin.Forms;
 
+using QControlKit.Events;
+using QControlKit.Constants;
+
 namespace QControlKitXamDemo
 {
     public partial class CueListPage : ContentPage

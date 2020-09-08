@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Timers;
 
+using QControlKit.Events;
+using QControlKit.Constants;
+
 namespace QControlKit
 {
     public class QWorkspace
@@ -75,7 +78,7 @@ namespace QControlKit
             client.CueUpdated += OnCueUpdated;
 
             this.server = server;
-            Log.Debug($"[workspace] <{name}> initizalied for server: {server.name} ");
+            Log.Debug($"[workspace] <{name}> on {server.name} initialized.");
         }
 
         //updateWithDictionary
@@ -125,7 +128,7 @@ namespace QControlKit
                     return name.Substring(0, name.Length - 6);
                 return name;
             } 
-        } //TODO
+        }
 
         public string serverName { get { return server.name; } }
 
@@ -144,7 +147,7 @@ namespace QControlKit
 
         public void connect(string passcode = null)
         {
-            Log.Debug($"[workspace] connecting to {this.server.host} with passcode: {passcode}");
+            Log.Information($"[workspace] connecting to <{name}> @ {this.server.host}:{this.server.port}");
 
             if(hasPasscode && passcode == null)
             {
@@ -155,13 +158,12 @@ namespace QControlKit
 
             if (!client.connect())
             {
-                Log.Error($"[workspace] *** couldn't connect to server client is not connected");
+                Log.Error($"[workspace] *** couldn't connect to server client is not connected.");
                 return;
             }
 
             //save password for reuse
             this.passcode = passcode;
-            Log.Information("[workspace] connecting...");
             if (passcode != null)
                 client.sendMessage($"{workspacePrefix}/connect", passcode);
             else
@@ -171,7 +173,6 @@ namespace QControlKit
         private void finishConnection()
         {
             //TODO
-            Log.Information($"[workspace] connected to <{name}> running on QLab version <{version}>");
             connected = true;
             startReceivingUpdates();
             //fetchQLabVersion();
@@ -193,7 +194,7 @@ namespace QControlKit
 
         public void disconnect()
         {
-            Log.Information($"[workspace] disconnect: {name}");
+            Log.Information($"[workspace] disconnecting from <{name}>");
             if (heartbeatTimer != null)
                 stopHeartbeat();
             stopReceivingUpdates();
@@ -232,7 +233,7 @@ namespace QControlKit
         public void stopReceivingUpdates() { client.sendMessage($"{workspacePrefix}/updates", 0); }
         public void enableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 1); }
         public void disableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 0); }
-        public void fetchQLabVersion() { client.sendMessage($"{workspacePrefix}/version"); } //TODO: EventHandler for this
+        public void fetchQLabVersion() { client.sendMessage($"{workspacePrefix}/version"); } //TODO: EventHandler for this? Is this still needed?
         public void fetchCueLists() { client.sendMessage($"{workspacePrefix}/cueLists"); } //TODO: EventHandler for CueListUpdated
         public void fetchPlaybackPositionForCue(QCue cue) { client.sendMessage(addressForCue(cue, QOSCKey.PlaybackPositionId)); } //EventHandler for this? can I use the CueListPlaybackPosition one?
         public void go() { client.sendMessage($"{workspacePrefix}/go"); }
@@ -410,7 +411,7 @@ namespace QControlKit
 
         private void OnWorkspaceConnected(object source, QWorkspaceConnectedArgs args)
         {
-            Log.Debug($"[workspace] Connection being finished.");
+            Log.Information($"[workspace] Connection to <{name}> successful, finishing things up.");
             finishConnection();
         }
 
@@ -505,7 +506,7 @@ namespace QControlKit
             QCue selectedCue = cueWithID(args.cueID);
             if (selectedCue != null)
             {
-                Log.Information($"[workspace] cue list <{cueList.displayName}> playback position changed to <{selectedCue.displayName}>");
+                Log.Debug($"[workspace] cue list <{cueList.displayName}> playback position changed to <{selectedCue.displayName}>");
                 CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = cueList.uid, cueID = selectedCue.uid });
 
             }
@@ -535,9 +536,7 @@ namespace QControlKit
                 return;
             if (cue.ignoreUpdates)
                 return;
-
             cue.updatePropertiesWithDictionary(args.data);
-
         }
 
         private void OnWorkspaceUpdated()
@@ -555,7 +554,6 @@ namespace QControlKit
             {
                 cueList.Print();
             }
-            Log.Information("[workspace] End of Workspace");
         }
         #endregion
     }

@@ -1,4 +1,4 @@
-﻿namespace QControlKit
+﻿namespace QControlKit.Events
 {
     public delegate void QServerFoundHandler(object source, QServerFoundArgs args);
     public delegate void QServerUpdatedHandler(object source, QServerUpdatedArgs args);

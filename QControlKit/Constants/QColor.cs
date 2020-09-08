@@ -1,4 +1,4 @@
-﻿namespace QControlKit
+﻿namespace QControlKit.Constants
 {
     public class QColor
     {

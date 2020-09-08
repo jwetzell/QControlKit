@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace QControlKit
+namespace QControlKit.Events
 {
     public class QServerFoundArgs : EventArgs
     {

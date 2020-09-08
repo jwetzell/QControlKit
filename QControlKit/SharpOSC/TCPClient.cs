@@ -54,7 +54,7 @@ namespace SharpOSC
                 client = new TcpClient(Address, Port);
                 receivingThread = new Thread(ReceiveLoop);
                 receivingThread.Start();
-                Console.WriteLine($"[tcpclient] connected to <{Address}:{Port}>");
+                Log.Debug($"[tcpclient] connected to <{Address}:{Port}>");
                 return true;
             } 
             catch (Exception e)

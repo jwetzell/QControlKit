@@ -5,6 +5,8 @@ using QControlKit;
 using System.Collections.ObjectModel;
 using System.Collections.Generic;
 
+using QControlKit.Events;
+
 namespace QControlKitXamDemo
 {
     // Learn more about making custom code visible in the Xamarin.Forms previewer
@@ -28,7 +30,7 @@ namespace QControlKitXamDemo
             if(e.SelectedItem != null)
             {
                 QWorkspace selectedWorkspace = e.SelectedItem as QWorkspace;
-                Console.WriteLine($"[demo] workspace: {selectedWorkspace.nameWithoutPathExtension} has been selected");
+                Console.WriteLine($"[demo] Workspace <{selectedWorkspace.nameWithoutPathExtension}> has been selected");
                 if (selectedWorkspace.hasPasscode)
                 {
                     string passcode = await DisplayPromptAsync("Workspace has passcode", "Enter Passcode", maxLength: 4, keyboard: Keyboard.Numeric);
@@ -49,8 +51,6 @@ namespace QControlKitXamDemo
 
         private void Browser_ServerUpdatedWorkspaces(object source, QServerUpdatedArgs args)
         {
-            Console.WriteLine(args.server.name);
-
             ServerGroup serverGroup = new ServerGroup(args.server.name);
             serverGroup.AddRange(args.server.workspaces);
 

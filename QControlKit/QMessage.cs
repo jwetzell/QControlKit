@@ -19,7 +19,7 @@ namespace QControlKit
         {
             get
             {
-                //string join probably won't work might need to cast argument objects to strings first
+                //string join probably won't work might need to cast argument objects to strings first?
                 return $"address: {address}, arguments: {string.Join(" - ", arguments)}";
             }
         }

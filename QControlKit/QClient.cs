@@ -5,6 +5,9 @@ using Newtonsoft.Json.Linq;
 using SharpOSC;
 using Serilog;
 
+using QControlKit.Events;
+using QControlKit.Constants;
+
 namespace QControlKit
 {
     public class QClient
@@ -107,7 +110,6 @@ namespace QControlKit
                 }
                 else if (message.IsConnect)
                 {
-                    //Log.Debug($"[client] Connection message received: {message.response}");
                     if (message.response.ToString() == "ok")
                         OnWorkspaceConnected();
                     else

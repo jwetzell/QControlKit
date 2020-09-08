@@ -1,10 +1,11 @@
-﻿namespace QControlKit
+﻿namespace QControlKit.Constants
 {
     static class QBonjour
     {
         public const string TCPService = "_qlab._tcp.local.";
         public const string UDPService = "_qlab._udp.local.";
     }
+
     static class QCueType
     {
         public const string Cue = "Cue";
@@ -121,17 +122,16 @@
     }
 
 
-    //these should really be enums
-    static class QFadeMode
+    enum QFadeMode
     {
-        public const int Absolute = 0;
-        public const int Relative = 1;
+        Absolute = 0,
+        Relative = 1
     }
 
-    static class QContinueMode
+    enum QContinueMode
     {
-        public const int NoContinue = 0;
-        public const int AutoContinue = 1;
-        public const int AutoFollow = 2;
+        NoContinue = 0,
+        AutoContinue = 1,
+        AutoFollow = 2
     }
 }

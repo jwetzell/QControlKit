@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
+using QControlKit.Events;
+using QControlKit.Constants;
+
 namespace QControlKit
 {
     public class QCue
@@ -42,7 +45,7 @@ namespace QControlKit
 
             //this breaks things??? 
             //it definitely is in the original but somehow the recursion is not working as I expect..
-            //but cue population still works without this as child cues are populated in a later
+            //but cue population still works without this as child cues are populated later
 
             /*JToken children = dict[QOSCKey.Cues];
             if(children != null && children.Type == JTokenType.Array)
@@ -102,6 +105,7 @@ namespace QControlKit
         //isEqual?
         //hash?
         //compare?
+        //TODO
         public bool isEqualToCue(QCue cue) { throw new NotImplementedException(); }
         public void setWorkspace(QWorkspace workspace)
         {
@@ -121,7 +125,7 @@ namespace QControlKit
                 return;
             childCues.Add(cue);
             childCuesUIDMap.Add(uid, cue);
-            //some sorting of the childCues needs to be done?
+            //some sorting of the childCues needs to be done? //TODO
             //reset sorting index
         }
         public void removeChildCue(QCue cue) { throw new NotImplementedException(); }
@@ -130,13 +134,12 @@ namespace QControlKit
         
         //copied: yes
         //implemented: no
+        //TODO
         #region Class Methods
         public string iconForType(string type) { throw new NotImplementedException(); }
         public List<string> fadeModeTitles() { throw new NotImplementedException(); }
         #endregion
 
-        //copied: yes
-        //implemented: not all
         #region Convenience Accessors
         public List<QCue> cues
         {
@@ -482,7 +485,6 @@ namespace QControlKit
         }
 
         //TODO add quaternion property and setter
-
         public Size surfaceSize() { throw new NotImplementedException(); }
         public Size cueSize() { throw new NotImplementedException(); }
         public List<string> availableSurfaceName() { throw new NotImplementedException(); }
@@ -527,7 +529,8 @@ namespace QControlKit
 
                 if (!this.ignoreUpdates)
                 {
-                    //TODO: Send Cue Needs Updated
+                    //TODO: This should be enough?
+                    workspace.fetchBasicPropertiesForCue(this);
                 }
             }
         }
@@ -540,7 +543,7 @@ namespace QControlKit
         {
             bool cueUpdated = false;
 
-            //TODO
+            //TODO: pretty sure this is done
             JObject dictObj = (JObject)dict;
             List<string> propertiesUpdated = new List<string>();
             foreach (var obj in dictObj)
@@ -570,7 +573,7 @@ namespace QControlKit
             return true;
         }
 
-        //enqueue updated notification?
+        //enqueue updated notification? //TODO
         public bool updateChildCuesWithPropertiesArray(JToken value, bool removeUnused)
         {
             if (!workspace.connected)
@@ -621,9 +624,6 @@ namespace QControlKit
         #endregion
 
 
-
-        //Methods Copied: Yes
-        //Methods Implemented: Not all
         #region Children Cues
         public List<string> allChildCueUids()
         {
@@ -807,8 +807,6 @@ namespace QControlKit
         public void pullDownPropertyForKey(string key) { }
         
 
-        //Methods Copied: Yes
-        //Methods Implemented: Yes
         #region Actions
         public void start() { workspace.startCue(this);  }
         public void stop() { workspace.stopCue(this);  }
@@ -839,6 +837,7 @@ namespace QControlKit
         {
             Print(0);
         }
+
         public void Print(int level)
         {
             string indent = new string(' ', level*2);
