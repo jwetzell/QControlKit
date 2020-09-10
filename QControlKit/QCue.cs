@@ -239,7 +239,10 @@ namespace QControlKit
         {
             get
             {
-                return propertyForKey(QOSCKey.Notes).ToString();
+                if (propertyForKey(QOSCKey.Notes) != null)
+                    return propertyForKey(QOSCKey.Notes).ToString();
+                else
+                    return "";
             }
             set
             {
@@ -568,7 +571,6 @@ namespace QControlKit
 
             if (!cueUpdated)
                 return false;
-            
             OnCuePropertiesUpdated(propertiesUpdated);
             return true;
         }

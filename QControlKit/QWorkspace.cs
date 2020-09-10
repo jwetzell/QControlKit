@@ -342,7 +342,7 @@ namespace QControlKit
             string[] keys = new string[] {  QOSCKey.Name, QOSCKey.Number, QOSCKey.FileTarget, QOSCKey.CueTargetNumber, 
                                             QOSCKey.HasFileTargets, QOSCKey.HasCueTargets, QOSCKey.Armed, QOSCKey.ColorName, 
                                             QOSCKey.ContinueMode, QOSCKey.Flagged, QOSCKey.PreWait, QOSCKey.PostWait, 
-                                            QOSCKey.Duration, QOSCKey.AllowsEditingDuration };
+                                            QOSCKey.Duration, QOSCKey.AllowsEditingDuration, QOSCKey.Notes };
             fetchPropertiesForCue(cue, keys, false);
         }
 
