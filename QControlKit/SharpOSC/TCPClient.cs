@@ -169,6 +169,7 @@ namespace SharpOSC
             {
                 if (client.Connected)
                 {
+                    Log.Debug($"[tcpClient] closing connection to {Address}");
                     client.GetStream().Close();
                     client.Close();
                 }

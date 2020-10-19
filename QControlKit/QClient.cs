@@ -52,6 +52,7 @@ namespace QControlKit
 
         public void disconnect()
         {
+            Log.Debug($"[client] disconnecting from {tcpClient.Address}");
             tcpClient.Close();
         }
 
