@@ -210,7 +210,7 @@ namespace QControlKit
 
                 QCue cue = childCuesUIDMap[aUid];
 
-                Log.Debug($"Removing Child Cue From {listName} : {cue.uid} + {cue.listName}");
+                //Log.Debug($"Removing Child Cue From {listName} : {cue.uid} + {cue.listName}");
                 childCues.Remove(cue);
                 childCuesUIDMap.Remove(aUid);
             }
@@ -649,6 +649,8 @@ namespace QControlKit
                     if (value.Type != JTokenType.Array)
                         continue;
                     updateChildCuesWithPropertiesArray(value, true);
+                    propertiesUpdated.Add(obj.Key);
+                    cueUpdated = true;
                 }
                 else
                 {
