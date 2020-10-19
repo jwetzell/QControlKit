@@ -642,7 +642,6 @@ namespace QControlKit
                     if (value.Type != JTokenType.Array)
                         continue;
                     updateChildCuesWithPropertiesArray(value, false);
-                    workspace.Print();
                 }
                 else if(obj.Key.Equals(QOSCKey.Children) && IsGroup)
                 {
