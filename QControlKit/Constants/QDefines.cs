@@ -97,6 +97,7 @@
         public const string PatchList = "patchList";
         public const string SurfaceList = "surfaceList";
         public const string Cues = "cues";
+        public const string Children = "children";
         public const string ListName = "listName";
         public const string SurfaceID = "surfaceID";
         public const string FullSurface = "fullSurface";
