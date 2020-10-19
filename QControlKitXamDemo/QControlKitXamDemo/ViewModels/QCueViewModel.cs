@@ -27,7 +27,7 @@ namespace QControlKitXamDemo.ViewModels
             foreach(var property in args.properties)
             {
                 //Log.Debug($"[cueviewmodel] property <{property}> has been updated.");
-                if (property.Equals(QOSCKey.Name))
+                if (property.Equals(QOSCKey.Name) || property.Equals(QOSCKey.ListName))
                 {
                     OnPropertyChanged("name");
                 }else if (property.Equals(QOSCKey.ColorName))
@@ -50,7 +50,7 @@ namespace QControlKitXamDemo.ViewModels
         public string name { 
             get
             {
-                return cue.displayName;
+                return cue.listName;
             }
 
             set
