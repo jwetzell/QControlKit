@@ -50,6 +50,7 @@ namespace QControlKit
             root.setProperty(QIdentifiers.RootCue, QOSCKey.UID, false);
             root.setProperty("Cue Lists", QOSCKey.Name, false);
             root.setProperty(QCueType.CueList, QOSCKey.Type, false);
+            root.nestLevel = -1;
 
             if (version == null || version.Length <= 0)
                 version = "3.0.0";
@@ -331,19 +332,21 @@ namespace QControlKit
 
         public void fetchDefaultPropertiesForCue(QCue cue)
         {
-            string[] keys = new string[] {  QOSCKey.UID, QOSCKey.Number, QOSCKey.Name, 
+            List<string> keys = new List<string> {  QOSCKey.UID, QOSCKey.Number, QOSCKey.Name, 
                                             QOSCKey.ListName, QOSCKey.Type, QOSCKey.ColorName, 
                                             QOSCKey.Flagged, QOSCKey.Armed, QOSCKey.Notes };
-            fetchPropertiesForCue(cue, keys, false);
+            fetchPropertiesForCue(cue, keys.ToArray(), false);
         }
 
         public void fetchBasicPropertiesForCue(QCue cue)
         {
-            string[] keys = new string[] {  QOSCKey.Name, QOSCKey.ListName, QOSCKey.Number, QOSCKey.FileTarget, QOSCKey.CueTargetNumber, 
+            List<string> keys = new List<string> {  QOSCKey.Name, QOSCKey.ListName, QOSCKey.Number, QOSCKey.FileTarget, QOSCKey.CueTargetNumber, 
                                             QOSCKey.HasFileTargets, QOSCKey.HasCueTargets, QOSCKey.Armed, QOSCKey.ColorName, 
                                             QOSCKey.ContinueMode, QOSCKey.Flagged, QOSCKey.PreWait, QOSCKey.PostWait, 
                                             QOSCKey.Duration, QOSCKey.AllowsEditingDuration, QOSCKey.Notes };
-            fetchPropertiesForCue(cue, keys, false);
+            if (cue.IsGroup)
+                keys.Add(QOSCKey.Children);
+            fetchPropertiesForCue(cue, keys.ToArray(), false);
         }
 
         public void fetchPropertiesForCue(QCue cue, string[] keys, bool includeChildren)
@@ -504,11 +507,12 @@ namespace QControlKit
             cueList.setProperty(args.cueID, QOSCKey.PlaybackPositionId, false);
 
             QCue selectedCue = cueWithID(args.cueID);
+
+            //TODO: need to implement when playbackposition is "none"
             if (selectedCue != null)
             {
                 Log.Debug($"[workspace] cue list <{cueList.displayName}> playback position changed to <{selectedCue.displayName}>");
                 CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = cueList.uid, cueID = selectedCue.uid });
-
             }
 
 
@@ -532,10 +536,9 @@ namespace QControlKit
         {
             QCue cue = cueWithID(args.cueID);
 
-            if (cue == null)
+            if (cue == null || cue.ignoreUpdates)
                 return;
-            if (cue.ignoreUpdates)
-                return;
+
             cue.updatePropertiesWithDictionary(args.data);
         }
 

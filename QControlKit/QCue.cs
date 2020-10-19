@@ -10,7 +10,7 @@ using QControlKit.Constants;
 
 namespace QControlKit
 {
-    public class QCue
+    public class QCue : IComparable
     {
 
         public QWorkspace workspace;
@@ -19,6 +19,7 @@ namespace QControlKit
         public Dictionary<string, QCue> childCuesUIDMap;
 
         public int sortIndex;
+        public int nestLevel;
 
         private bool needsSortChildCues;//?
         private bool needsNotifyCueUpdated;//?
@@ -43,6 +44,38 @@ namespace QControlKit
             init();
             this.workspace = workspace;
 
+            //this breaks things??? 
+            //it definitely is in the original but somehow the recursion is not working as I expect..
+            //but cue population still works without this as child cues are populated later
+
+            /*JToken children = dict[QOSCKey.Cues];
+            if(children != null && children.Type == JTokenType.Array)
+            {
+                Log.Debug($"[cue] new cue being created with {children.Count()} childCues");
+                foreach (var aChildDict in children)
+                {
+                    string uid = (string)aChildDict[QOSCKey.UID];
+                    //Log.Debug($"[cue] childDict with uid: {uid} being processed");
+                    if (uid == null)
+                        continue;
+                    string name = dict[QOSCKey.UID].ToString();
+                    Log.Debug($"[cue] calling new cue from {name}");
+
+                    //QCue child = new QCue(aChildDict, workspace); 
+
+                    *//*childCues.Add(child);
+                    childCuesUIDMap.Add(uid, child);*//*
+                }
+            }*/
+
+            updatePropertiesWithDictionary(dict);
+        }
+
+        public QCue(JToken dict, QWorkspace workspace, int nestLevel)
+        {
+            init();
+            this.workspace = workspace;
+            this.nestLevel = nestLevel + 1;
             //this breaks things??? 
             //it definitely is in the original but somehow the recursion is not working as I expect..
             //but cue population still works without this as child cues are populated later
@@ -101,12 +134,37 @@ namespace QControlKit
                 return $"(Cue: {this}) name: {name} [id:{uid} number:{number} type: {type}";
             }
         }
-        
-        //isEqual?
-        //hash?
-        //compare?
-        //TODO
-        public bool isEqualToCue(QCue cue) { throw new NotImplementedException(); }
+
+        public override bool Equals(Object obj)
+        {
+            //Check for null and compare run-time types.
+            if ((obj == null) || !this.GetType().Equals(obj.GetType()))
+            {
+                return false;
+            }
+            else
+            {
+                return isEqualToCue((QCue)obj);
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return uid.GetHashCode();
+        }
+
+        public int CompareTo(object obj)
+        {
+            if (obj.GetType().Equals(this.GetType()))
+                return sortIndex.CompareTo(((QCue)obj).sortIndex);
+            else
+                return 0;
+        }
+
+        public bool isEqualToCue(QCue cue) {
+            return cue.uid.Equals(uid);
+        }
+
         public void setWorkspace(QWorkspace workspace)
         {
             if(this.workspace != workspace)
@@ -114,11 +172,13 @@ namespace QControlKit
                 this.workspace = workspace;
             }
         }
+
         public void addChildCue(QCue cue)
         {
-            string uid = propertyForKey(QOSCKey.UID).ToString();
-            addChildCue(cue, uid);
+            string childUid = propertyForKey(QOSCKey.UID).ToString();
+            addChildCue(cue, childUid);
         }
+
         public void addChildCue(QCue cue, string uid)
         {
             if (uid.Length == 0)
@@ -128,9 +188,33 @@ namespace QControlKit
             //some sorting of the childCues needs to be done? //TODO
             //reset sorting index
         }
-        public void removeChildCue(QCue cue) { throw new NotImplementedException(); }
-        public void removeAllChildCues() { throw new NotImplementedException(); }
-        public void removeChildCuesWithIDs(List<string> uids) { throw new NotImplementedException(); }
+
+        public void removeChildCue(QCue cue) {
+            if (cue.uid.Length == 0)
+                return;
+
+            childCues.Remove(cue);
+            childCuesUIDMap.Remove(cue.uid);
+        }
+
+        public void removeAllChildCues() {
+            childCuesUIDMap.Clear();
+            childCues.Clear();
+        }
+
+        public void removeChildCuesWithIDs(List<string> uids) {
+            foreach (string aUid in uids)
+            {
+                if (!childCuesUIDMap.ContainsKey(aUid))
+                    continue;
+
+                QCue cue = childCuesUIDMap[aUid];
+
+                Log.Debug($"Removing Child Cue From {listName} : {cue.uid} + {cue.listName}");
+                childCues.Remove(cue);
+                childCuesUIDMap.Remove(aUid);
+            }
+        }
         
         //copied: yes
         //implemented: no
@@ -554,9 +638,18 @@ namespace QControlKit
                 JToken value = obj.Value;
                 if (obj.Key.Equals(QOSCKey.Cues))
                 {
+                    //Log.Debug($"Cues OSC Key found in update message...updating child cues");
                     if (value.Type != JTokenType.Array)
                         continue;
                     updateChildCuesWithPropertiesArray(value, false);
+                    workspace.Print();
+                }
+                else if(obj.Key.Equals(QOSCKey.Children) && IsGroup)
+                {
+                    //Log.Debug($"Children OSC Key found in update message for {uid} ...updating child and removing deleted ones.");
+                    if (value.Type != JTokenType.Array)
+                        continue;
+                    updateChildCuesWithPropertiesArray(value, true);
                 }
                 else
                 {
@@ -565,6 +658,7 @@ namespace QControlKit
                     {
                         cueUpdated = true;
                         propertiesUpdated.Add(obj.Key);
+                        //Log.Debug($"[cue] cue property {obj.Key} updated with {obj.Value}");
                     }
                 }
             }
@@ -581,26 +675,31 @@ namespace QControlKit
             if (!workspace.connected)
                 return false;
 
-            List<string> previousUids = null;
+            List<string> previousUids = new List<string>();
+
             if (removeUnused)
+            {
                 previousUids = allChildCueUids();
+            }
 
             int index = 0;
 
             foreach (var dict in value)
             {
-                string uid = (string)dict[QOSCKey.UID];
-                if (uid == null)
+                string childUid = (string)dict[QOSCKey.UID];
+                if (childUid == null)
                     continue;
 
                 if (removeUnused)
-                    previousUids.Remove(uid);
+                {
+                    previousUids.Remove(childUid);
+                }
 
-                QCue child = cueWithID(uid, false);
+                QCue child = cueWithID(childUid, false);
 
                 if (child != null)
                 {
-                    bool didUpdateProperties = updatePropertiesWithDictionary(dict);
+                    bool didUpdateProperties = child.updatePropertiesWithDictionary(dict);
                     if (didUpdateProperties)
                         needsNotifyCueUpdated = true;
 
@@ -614,13 +713,25 @@ namespace QControlKit
                 }
                 else
                 {
-                    child = new QCue(dict, workspace);
+                    child = new QCue(dict, workspace, nestLevel);
                     child.sortIndex = index;
-                    addChildCue(child, uid);
+                    addChildCue(child, childUid);
                     needsNotifyCueUpdated = true;
                 }
                 index++;
             }
+
+
+            if (previousUids.Count() > 0 && removeUnused)
+            {
+                removeChildCuesWithIDs(previousUids);
+            }
+
+            if (needsSortChildCues)
+            {
+                //something about cues needing to be sorted?  
+            }
+
             return needsNotifyCueUpdated;
         }
         #endregion
@@ -728,20 +839,24 @@ namespace QControlKit
 
                 Dictionary<string,QCue> newChildCuesUIDMap = new Dictionary<string, QCue>();
                 int index = 0;
-                string uid = null;
+                string childUid = null;
 
                 foreach(var aCue in (List<QCue>)value)
                 {
-                    uid = aCue.uid;
-                    if (uid == null)
+                    childUid = aCue.uid;
+                    if (childUid == null)
                         continue;
                     aCue.sortIndex = index;
-                    newChildCuesUIDMap.Add(uid, aCue);
+                    newChildCuesUIDMap.Add(childUid, aCue);
                     index++;
                 }
                 childCues = (List<QCue>)value;
                 childCuesUIDMap = newChildCuesUIDMap;
 
+            }
+            else if (key.Equals(QOSCKey.Children))
+            {
+                Log.Debug($"Children Cues property updated for: {this.displayName} : {this.uid}");
             }
             else if(key.Equals(QOSCKey.PlaybackPositionId))
             {
@@ -844,7 +959,7 @@ namespace QControlKit
         {
             string indent = new string(' ', level*2);
 
-            Log.Information($"{indent}\u00b7{displayName}");
+            Log.Information($"{indent}\u00b7{displayName} - {uid}");
             if (IsGroup)
             {
                 level++;
@@ -858,6 +973,8 @@ namespace QControlKit
                 }
             }
         }
+
+        
         #endregion
     }
 }
