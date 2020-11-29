@@ -196,7 +196,7 @@ namespace QControlKit
 
         protected virtual void OnWorkspaceUpdated()
         {
-            Log.Debug($"[client] Workspace Updated");
+            //Log.Debug($"[client] Workspace Updated");
             WorkspaceUpdated?.Invoke(this, new QWorkspaceUpdatedArgs());
         }
 

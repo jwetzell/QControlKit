@@ -98,6 +98,26 @@ namespace QControlKit
             return didUpdate;
         }
 
+        public QWorkspaceInfo getWorkspaceInfo()
+        {
+            return new QWorkspaceInfo
+            {
+                displayName = name,
+                hasPasscode = hasPasscode,
+                version = version,
+                uniqueID = uniqueID,
+            };
+        }
+
+        public QServerInfo GetServerInfo()
+        {
+            return new QServerInfo
+            {
+                host = server.host,
+                port = server.port
+            };
+        }
+
         public string description { get { return $"{name} : {uniqueID}"; } }
 
         public bool isOlderThanVersion(string version)

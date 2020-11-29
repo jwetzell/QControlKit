@@ -64,24 +64,20 @@ namespace QControlKitXamDemo
 
         void Workspace_WorkspaceUpdated(object source, QWorkspaceUpdatedArgs args)
         {
-            foreach (var cue in connectedWorkspace.cueLists)
+            if(connectedWorkspace.cueLists.Count > 0)
             {
-                if(cue.cues.Count > 0)
+                List<Task> cueAddTasks = new List<Task>();
+                foreach(var aCue in connectedWorkspace.cueLists)
                 {
-                    List<Task> cueAddTasks = new List<Task>();
-                    foreach(var aCue in cue.cues)
+                    Grid cueGrid = cueToGrid(aCue);
+                    cueGridDict.Add(aCue.uid, cueGrid);
+                    MainThread.InvokeOnMainThreadAsync(() =>
                     {
-                        Grid cueGrid = cueToGrid(aCue);
-                        cueGridDict.Add(aCue.uid, cueGrid);
-                        MainThread.InvokeOnMainThreadAsync(() =>
-                        {
-                            cueListsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-                            cueListsGrid.Children.Add(cueGrid, 0, aCue.sortIndex);
-                        }).Wait();
-                    }
-                    connectedWorkspace.valueForKey(cue, QOSCKey.PlaybackPositionId); //fetch playback position for cueList once all cue loading is done.
-                    break; //only load first cue list with cues.
+                        cueListsGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+                        cueListsGrid.Children.Add(cueGrid, 0, aCue.sortIndex);
+                    }).Wait();
                 }
+                connectedWorkspace.valueForKey(connectedWorkspace.firstCueList, QOSCKey.PlaybackPositionId); //fetch playback position for cueList once all cue loading is done.
             }
         }
 
