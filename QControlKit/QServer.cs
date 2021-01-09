@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using Zeroconf;
 
 using QControlKit.Events;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace QControlKit
 {
     public class QServer
     {
         public event QServerUpdatedHandler ServerUpdated;
+        public event QServerWorkspaceAddedHandler WorkspaceAdded;
+        public event QServerWorkspaceRemovedHandler WorkspaceRemoved;
 
         private QClient client;
 
@@ -17,7 +21,7 @@ namespace QControlKit
         public string name { get; set; }
         public string version { get; set; }
         public IZeroconfHost zeroconfHost;
-        public List<QWorkspace> workspaces = new List<QWorkspace>();
+        public ObservableCollection<QWorkspace> workspaces = new ObservableCollection<QWorkspace>();
 
         public QServer(string host, int port)
         {
@@ -61,12 +65,42 @@ namespace QControlKit
                 {
                     QWorkspace workspaceToAdd = new QWorkspace(workspace, this);
                     workspaces.Add(workspaceToAdd);
+                    OnServerAddedWorkspace(workspaceToAdd);
                     //set server version to the version of first workspace found...kind of hacky but eh
                     if (version == null)
                         version = workspaceToAdd.version;
                 }
             }
+            List<QWorkspace> tempWorkspaces = workspaces.ToList();
+            for(int i = 0;i< tempWorkspaces.Count;i++)
+            {
+                QWorkspace workspace = workspaces[i];
+                bool toBeRemoved = true;
+                foreach (var foundWorkspace in args.Workspaces)
+                {
+                    if(workspace.uniqueID == foundWorkspace.uniqueID)
+                    {
+                        toBeRemoved = false;
+                    }
+                }
+                if (toBeRemoved)
+                {
+                    workspace.disconnect();
+                    workspaces.Remove(workspace);
+                    OnServerRemovedWorkspace(workspace);
+                }
+            }
             OnServerUpdated(this);
+        }
+
+        protected virtual void OnServerAddedWorkspace(QWorkspace workspace)
+        {
+            WorkspaceAdded?.Invoke(this, new QServerWorkspaceChangedArgs { server = this, workspace = workspace });
+        }
+
+        protected virtual void OnServerRemovedWorkspace(QWorkspace workspace)
+        {
+            WorkspaceRemoved?.Invoke(this, new QServerWorkspaceChangedArgs { server = this, workspace = workspace });
         }
 
         protected virtual void OnServerUpdated(QServer server)

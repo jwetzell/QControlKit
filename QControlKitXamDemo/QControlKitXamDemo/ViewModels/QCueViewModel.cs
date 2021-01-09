@@ -2,7 +2,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Xamarin.Forms;
-
+using Serilog;
 using QControlKit.Events;
 using QControlKit.Constants;
 
@@ -26,7 +26,7 @@ namespace QControlKitXamDemo.ViewModels
         {
             foreach(var property in args.properties)
             {
-                //Log.Debug($"[cueviewmodel] property <{property}> has been updated.");
+                Log.Debug($"[cueviewmodel] property <{property}> has been updated.");
                 if (property.Equals(QOSCKey.Name) || property.Equals(QOSCKey.ListName))
                 {
                     OnPropertyChanged("name");

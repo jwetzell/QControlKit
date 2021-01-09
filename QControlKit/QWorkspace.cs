@@ -11,7 +11,7 @@ using QControlKit.Constants;
 
 namespace QControlKit
 {
-    public class QWorkspace
+    public class QWorkspace: IEquatable<QWorkspace>
     {
 
         private QServer server;
@@ -216,6 +216,8 @@ namespace QControlKit
         public void disconnect()
         {
             Log.Information($"[workspace] disconnecting from <{name}>");
+            if (!connected)
+                return;
             if (heartbeatTimer != null)
                 stopHeartbeat();
             stopReceivingUpdates();
@@ -578,6 +580,25 @@ namespace QControlKit
                 cueList.Print();
             }
         }
+
         #endregion
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null) return false;
+            QWorkspace objAsPart = obj as QWorkspace;
+            if (objAsPart == null) return false;
+            else return Equals(objAsPart);
+        }
+
+        public override int GetHashCode()
+        {
+            return this.uniqueID.GetHashCode();
+        }
+
+        public bool Equals(QWorkspace other)
+        {
+            return this.uniqueID.Equals(other.uniqueID);
+        }
     }
 }

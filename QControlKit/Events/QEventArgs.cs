@@ -9,6 +9,17 @@ namespace QControlKit.Events
         public QServer server { get; set; }
     }
 
+    public class QServerWorkspaceChangedArgs : EventArgs
+    {
+        public QServer server { get; set; }
+        public QWorkspace workspace { get; set; }
+    }
+
+    public class QServerLostArgs : EventArgs
+    {
+        public QServer server { get; set; }
+    }
+
     public class QServerUpdatedArgs : EventArgs
     {
         public QServer server { get; set; }

@@ -1,7 +1,10 @@
 ﻿namespace QControlKit.Events
 {
     public delegate void QServerFoundHandler(object source, QServerFoundArgs args);
+    public delegate void QServerLostHandler(object source, QServerLostArgs args);
     public delegate void QServerUpdatedHandler(object source, QServerUpdatedArgs args);
+    public delegate void QServerWorkspaceAddedHandler(object source, QServerWorkspaceChangedArgs args);
+    public delegate void QServerWorkspaceRemovedHandler(object source, QServerWorkspaceChangedArgs args);
 
     public delegate void QWorkspacesUpdatedHandler(object source, QWorkspacesUpdatedArgs args);
 
