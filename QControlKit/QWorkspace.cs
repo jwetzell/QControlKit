@@ -313,13 +313,20 @@ namespace QControlKit
         public void pauseCue(QCue cue) { client.sendMessage(addressForCue(cue, "pause")); } //TODO: immediately update local for snappier whatever 
         public void loadCue(QCue cue) { client.sendMessage(addressForCue(cue, "load")); }
         public void resetCue(QCue cue) { client.sendMessage(addressForCue(cue, "reset")); }
-        public void deleteCue(QCue cue) { client.sendMessage(addressForCue(cue, "")); }
+        public void deleteCue(QCue cue) { client.sendMessage($"{workspacePrefix}/delete_id/{cue.propertyForKey(QOSCKey.UID)}"); }
         public void resumeCue(QCue cue) { client.sendMessage(addressForCue(cue, "resume")); }
         public void hardStopCue(QCue cue) { client.sendMessage(addressForCue(cue, "hardStop")); }
         public void hardPauseCue(QCue cue) { client.sendMessage(addressForCue(cue, "hardPause")); } //TODO: immediately update local for snappier whatever 
         public void togglePauseCue(QCue cue) { client.sendMessage(addressForCue(cue, "togglePause")); }
         public void previewCue(QCue cue) { client.sendMessage(addressForCue(cue, "preview")); }
         public void panicCue(QCue cue) { client.sendMessage(addressForCue(cue, "panic")); } //TODO: immediately update local for snappier whatever 
+
+        public void moveCue(QCue cue, int newIndex, QCue newParentCue)
+        {
+            //TODO: Test this
+            client.sendMessage($"{workspacePrefix}/move/{cue.propertyForKey(QOSCKey.UID)}", newIndex, newParentCue.propertyForKey(QOSCKey.UID));
+        }
+
         #endregion
 
         #region Cue Getters/Setters
