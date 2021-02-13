@@ -3,39 +3,42 @@
     public class QColor
     {
         public string name { get; set; }
-
         public string Hex { get; set; }
         public string lightHex { get; set; }
         public string darkHex { get; set; }
+
         public QColor()
         {
-            defaultColor();
+            noneColor();
         }
 
         public QColor(string name)
         {
             switch (name)
             {
-                case "red":
+                case QColorName.Red:
                     redColor();
                     break;
-                case "orange":
+                case QColorName.Orange:
                     orangeColor();
                     break;
-                case "yellow":
+                case QColorName.Yellow:
                     yellowColor();
                     break;
-                case "green":
+                case QColorName.Green:
                     greenColor();
                     break;
-                case "blue":
+                case QColorName.Blue:
                     blueColor();
                     break;
-                case "indigo":
+                case QColorName.Indigo:
                     indigoColor();
                     break;
-                case "purple":
+                case QColorName.Purple:
                     purpleColor();
+                    break;
+                case QColorName.None:
+                    noneColor();
                     break;
                 default:
                     defaultColor();
@@ -45,7 +48,15 @@
 
         private void defaultColor()
         {
-            name = "default";
+            name = QColorName.Default;
+            lightHex = "#ACAAB2";
+            Hex = "#8F8A99";
+            darkHex = "#77737F";
+        }
+
+        private void noneColor()
+        {
+            name = QColorName.None;
             lightHex = "#ACAAB2";
             Hex = "#8F8A99";
             darkHex = "#77737F";
@@ -53,28 +64,31 @@
 
         private void redColor()
         {
-            name = "red";
+            name = QColorName.Red;
             lightHex = "#FC563C";
             Hex = "#FC363B";
             darkHex = "#E31C24";
         }
+
         private void orangeColor()
         {
-            name = "orange";
+            name = QColorName.Orange;
             lightHex = "#FFAA00";
             Hex = "#FF9500";
             darkHex = "#FF6A00";
         }
+
         private void yellowColor ()
         {
-            name = "yellow";
+            name = QColorName.Yellow;
             lightHex = "#FFF480";
             Hex = "#F7E519";
             darkHex = "#FFD500";
         }
+
         private void greenColor()
         {
-            name = "green";
+            name = QColorName.Green;
             lightHex = "#17E639";
             Hex = "#00CC22";
             darkHex = "#00B300";
@@ -82,21 +96,23 @@
 
         private void blueColor()
         {
-            name = "blue";
+            name = QColorName.Blue;
             lightHex = "#5C73E6";
             Hex = "#415AD9";
             darkHex = "#2944CC";
         }
+
         private void indigoColor()
         {
-            name = "purple";
+            name = QColorName.Purple;
             lightHex = "#3F388C";
             Hex = "#5A5499";
             darkHex = "#6262B3";
         }
+
         private void purpleColor()
         {
-            name = "purple";
+            name = QColorName.Purple;
             lightHex = "#B500D9";
             Hex = "#9500B3";
             darkHex = "#730099";

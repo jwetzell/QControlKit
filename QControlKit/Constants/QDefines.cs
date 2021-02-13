@@ -124,6 +124,24 @@
         public const string RootCueUpdate = "[root group of cue lists]";
     }
 
+    public static class QConnectionStatus {
+        public const string BadPass = "badpass";
+        public const string Ok = "ok";
+        public const string Error = "error";
+    }
+
+    public static class QColorName
+    {
+        public const string Red = "red";
+        public const string Orange = "orange";
+        public const string Yellow = "yellow";
+        public const string Green = "green";
+        public const string Blue = "blue";
+        public const string Indigo = "indigo";
+        public const string Purple = "purple";
+        public const string None = "none";
+        public const string Default = "default"; //is this even an option?
+    }
 
     enum QFadeMode
     {
