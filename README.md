@@ -1,5 +1,5 @@
 # QControlKit
-This is a .NET library port of Figure53's [QLabKit](https://github.com/Figure53/QLabKit.objc).
+This is an unofficial .NET library port of Figure53's [QLabKit](https://github.com/Figure53/QLabKit.objc).
 
 
 ## Todo: give a basic example of the workflow
