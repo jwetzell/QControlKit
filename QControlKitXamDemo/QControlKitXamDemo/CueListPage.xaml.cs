@@ -36,7 +36,6 @@ namespace QControlKitXamDemo
 
         private async void ConnectedWorkspace_WorkspaceConnectionError(object source, QWorkspaceConnectionErrorArgs args)
         {
-            System.Console.WriteLine("WorkspaceConnectionError Called");
             if (args.status.Equals("badpass"))
             {
                 string passcode = await DisplayPromptAsync("Passcode was incorrect.", "Try Again", maxLength: 4, keyboard: Keyboard.Numeric);

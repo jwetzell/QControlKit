@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using QControlKit.Events;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace QControlKitXamDemo
 {
@@ -113,7 +114,7 @@ namespace QControlKitXamDemo
             if(e.SelectedItem != null)
             {
                 QWorkspace selectedWorkspace = e.SelectedItem as QWorkspace;
-                Console.WriteLine($"[demo] Workspace <{selectedWorkspace.nameWithoutPathExtension}> has been selected");
+                Log.Debug($"[demo] Workspace <{selectedWorkspace.nameWithoutPathExtension}> has been selected");
                 if (selectedWorkspace.hasPasscode)
                 {
                     string passcode = await DisplayPromptAsync("Workspace has passcode", "Enter Passcode", maxLength: 4, keyboard: Keyboard.Numeric);

@@ -59,7 +59,7 @@ namespace SharpOSC
             } 
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Log.Error(e.Message);
                 return false;
             }
             

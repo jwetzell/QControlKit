@@ -6,7 +6,7 @@
     <Authors>Joel Wetzell</Authors>
     <Version>1.0.0-devel</Version>
     <PackOnBuild>true</PackOnBuild>
-    <PackageVersion>0.0.16</PackageVersion>
+    <PackageVersion>0.0.17</PackageVersion>
     <PackageId>QControlKit</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Summary>Unofficial C# port of Figure53's QLabKit.objc</Summary>
