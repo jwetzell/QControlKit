@@ -104,7 +104,7 @@
 
         private void indigoColor()
         {
-            name = QColorName.Purple;
+            name = QColorName.Indigo;
             lightHex = "#3F388C";
             Hex = "#5A5499";
             darkHex = "#6262B3";

@@ -8,6 +8,10 @@
     <PackOnBuild>true</PackOnBuild>
     <PackageVersion>0.0.16</PackageVersion>
     <PackageId>QControlKit</PackageId>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Summary>Unofficial C# port of Figure53's QLabKit.objc</Summary>
+    <Title>QControlKit</Title>
+    <PackageProjectUrl>https://github.com/jwetzell/QControlKit</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
