@@ -1,12 +1,12 @@
 ﻿namespace QControlKit.Constants
 {
-    static class QBonjour
+    public static class QBonjour
     {
         public const string TCPService = "_qlab._tcp.local.";
         public const string UDPService = "_qlab._udp.local.";
     }
 
-    static class QCueType
+    public static class QCueType
     {
         public const string Cue = "Cue";
         public const string CueList = "Cue List";
@@ -115,11 +115,13 @@
         public const string FullScreen = "fullScreen";
     }
 
-    static class QIdentifiers
+    public static class QIdentifiers
     {
         // Identifiers for "fake" cues
         public const string RootCue = "__root__";
         public const string ActiveCues = "__active__";
+        public const string NoSelection = "none";
+        public const string RootCueUpdate = "[root group of cue lists]";
     }
 
 

@@ -526,24 +526,19 @@ namespace QControlKit
 
         private void OnCueListChangedPlaybackPosition(object source, QCueListChangedPlaybackPositionArgs args)
         {
-            QCue cueList = cueWithID(args.cueListID);
-
-            if (cueList == null)
-                return;
-            if (cueList.ignoreUpdates)
-                return;
-
-            cueList.setProperty(args.cueID, QOSCKey.PlaybackPositionId, false);
-
-            QCue selectedCue = cueWithID(args.cueID);
-
-            //TODO: need to implement when playbackposition is "none"
-            if (selectedCue != null)
+            if (!args.cueID.Equals(QIdentifiers.NoSelection))
             {
-                Log.Debug($"[workspace] cue list <{cueList.displayName}> playback position changed to <{selectedCue.displayName}>");
-                CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = cueList.uid, cueID = selectedCue.uid });
+                QCue cueList = cueWithID(args.cueListID);
+                if (cueList == null)
+                    return;
+                if (cueList.ignoreUpdates)
+                    return;
+                cueList.setProperty(args.cueID, QOSCKey.PlaybackPositionId, false);
             }
 
+            //TODO: need to implement when playbackposition is "none"
+            Log.Debug($"[workspace] cue list <{args.cueListID}> playback position changed to <{args.cueID}>");
+            CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = args.cueListID, cueID = args.cueID });
 
         }
 
@@ -554,11 +549,26 @@ namespace QControlKit
 
         private void OnCueNeedsUpdated(object source, QCueNeedsUpdatedArgs args)
         {
-            QCue cueToUpdate = cueWithID(args.cueID);
-            if (cueToUpdate == null)
+            if (args.cueID.Equals(QIdentifiers.RootCueUpdate))
+            {
+                Log.Debug("[workspace] root cue update requested, updating all cue lists");
+                foreach (var cuelist in this.cueLists)
+                {
+                    if (!cuelist.uid.Equals(QIdentifiers.ActiveCues))
+                        OnCueNeedsUpdated(this, new QCueNeedsUpdatedArgs { cueID = cuelist.uid });
+                }
                 return;
+            }
+            else
+            {
+                QCue cueToUpdate = cueWithID(args.cueID);
+            
+                if (cueToUpdate == null)
+                    return;
 
-            fetchBasicPropertiesForCue(cueToUpdate);
+                fetchBasicPropertiesForCue(cueToUpdate);
+            }
+
         }
 
         private void OnCueUpdated(object source, QCueUpdatedArgs args)
