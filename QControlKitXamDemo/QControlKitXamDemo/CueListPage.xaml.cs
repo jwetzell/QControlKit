@@ -51,12 +51,15 @@ namespace QControlKitXamDemo
             Device.BeginInvokeOnMainThread(() =>
             {
                 QCue selectedCue = connectedWorkspace.cueWithID(args.cueID);
-                connectedWorkspace.fetchDefaultPropertiesForCue(selectedCue);
-                selectedCueGrid.BindingContext = new QCueViewModel(selectedCue, false);
-                if (cueGridDict.ContainsKey(args.cueID))
+                if(selectedCue != null) //TODO: I think this being null is the result of a race condition?
                 {
-                    var cueGrid = cueGridDict[args.cueID]; //element to scroll to
-                    cueListScrollView.ScrollToAsync(cueGrid, ScrollToPosition.Center, true);
+                    connectedWorkspace.fetchDefaultPropertiesForCue(selectedCue);
+                    selectedCueGrid.BindingContext = new QCueViewModel(selectedCue, false);
+                    if (cueGridDict.ContainsKey(args.cueID))
+                    {
+                        var cueGrid = cueGridDict[args.cueID]; //element to scroll to
+                        cueListScrollView.ScrollToAsync(cueGrid, ScrollToPosition.Center, true);
+                    }
                 }
             });
         }

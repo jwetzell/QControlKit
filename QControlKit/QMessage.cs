@@ -129,19 +129,14 @@ namespace QControlKit
         {
             get
             {
-                if (IsCueUpdate)
-                {
+                if (IsCueUpdate) {
                     return AddressParts[4];
-                }else if (IsPlaybackPositionUpdate)
-                {
+                } else if (IsPlaybackPositionUpdate) {
                     //TODO: check string cast
                     return arguments.Count > 0 ? (string)arguments[0] : null;
-                }else if (IsReplyFromCue)
-                {
+                } else if (IsReplyFromCue) {
                     return AddressParts[2];
-                }
-                else
-                {
+                } else {
                     return null;
                 }
             }

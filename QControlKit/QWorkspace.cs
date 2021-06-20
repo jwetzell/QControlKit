@@ -1,5 +1,4 @@
-﻿//TODO: workspace connection error handlers
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -160,7 +159,7 @@ namespace QControlKit
 
         public List<QCue> cueLists { get { return root.cues; } }
         public string fullNameWithCueList(QCue cueList) { return ""; }
-        //TODO other convenience methods
+
         public string[] versionParts { get { return version.Split('.'); } }
         public bool connectedToQLab3 { get { return versionParts[0] == "3"; } }
 
@@ -193,10 +192,9 @@ namespace QControlKit
 
         private void finishConnection()
         {
-            //TODO
             connected = true;
             startReceivingUpdates();
-            //fetchQLabVersion();
+            //fetchQLabVersion(); //this is not needed since the version is loaded from the workspace info call
             fetchCueLists();
 
         }
@@ -210,7 +208,6 @@ namespace QControlKit
             else
                 connect();
 
-            //todo
         }
 
         public void disconnect()
@@ -225,9 +222,6 @@ namespace QControlKit
 
             connected = false;
             client.disconnect();
-            
-            //TODO
-            //root.removeAllChildCues();
 
         }
 
@@ -256,8 +250,8 @@ namespace QControlKit
         public void stopReceivingUpdates() { client.sendMessage($"{workspacePrefix}/updates", 0); }
         public void enableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 1); }
         public void disableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 0); }
-        public void fetchQLabVersion() { client.sendMessage($"{workspacePrefix}/version"); } //TODO: EventHandler for this? Is this still needed?
-        public void fetchCueLists() { client.sendMessage($"{workspacePrefix}/cueLists"); } //TODO: EventHandler for CueListUpdated
+        public void fetchQLabVersion() { client.sendMessage($"{workspacePrefix}/version"); }
+        public void fetchCueLists() { client.sendMessage($"{workspacePrefix}/cueLists"); }
         public void fetchPlaybackPositionForCue(QCue cue) { client.sendMessage(addressForCue(cue, QOSCKey.PlaybackPositionId)); } //EventHandler for this? can I use the CueListPlaybackPosition one?
         public void go() { client.sendMessage($"{workspacePrefix}/go"); }
         public void save() { client.sendMessage($"{workspacePrefix}/save"); }
@@ -356,8 +350,6 @@ namespace QControlKit
         #endregion
 
         #region Property Fetching
-        //TODO
-
 
         public void fetchDefaultPropertiesForCue(QCue cue)
         {
@@ -536,7 +528,6 @@ namespace QControlKit
                 cueList.setProperty(args.cueID, QOSCKey.PlaybackPositionId, false);
             }
 
-            //TODO: need to implement when playbackposition is "none"
             Log.Debug($"[workspace] cue list <{args.cueListID}> playback position changed to <{args.cueID}>");
             CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = args.cueListID, cueID = args.cueID });
 

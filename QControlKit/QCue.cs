@@ -186,7 +186,7 @@ namespace QControlKit
             childCues.Add(cue);
             childCuesUIDMap.Add(uid, cue);
             //some sorting of the childCues needs to be done? //TODO
-            //reset sorting index
+            //reset sorting index?
         }
 
         public void removeChildCue(QCue cue) {
@@ -730,7 +730,8 @@ namespace QControlKit
 
             if (needsSortChildCues)
             {
-                //something about cues needing to be sorted?  
+                childCues.Sort((q1, q2)=> q1.sortIndex.CompareTo(q2.sortIndex));
+                needsSortChildCues = false;
             }
 
             return needsNotifyCueUpdated;
@@ -872,8 +873,6 @@ namespace QControlKit
                     cueData[key] = value;
                 else
                     cueData.Remove(key);
-
-                //TODO: Cuelistchangedplaybackpositionid?
 
             }
             else
