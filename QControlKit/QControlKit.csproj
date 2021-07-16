@@ -21,5 +21,9 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Constants\" />
+    <Folder Include="Cue\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="Cue\" />
   </ItemGroup>
 </Project>
