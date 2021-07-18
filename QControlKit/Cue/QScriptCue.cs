@@ -14,7 +14,7 @@ namespace QControlKit.Cue
 
         public void compileSource()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/compileSource");
+            workspace.sendMessage($"/cue_id/{this.uid}/compileSource");
         }
     }
 }

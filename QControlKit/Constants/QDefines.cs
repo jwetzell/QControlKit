@@ -11,6 +11,7 @@
         public const string Cue = "Cue";
         public const string CueList = "Cue List";
         public const string Cart = "Cart";
+        public const string CueCart = "Cue Cart";
         public const string Group = "Group";
         public const string Audio = "";
         public const string Mic = "Mic";
@@ -52,7 +53,6 @@
         public const string AutoLoad = "autoLoad"; //implement on QCue
 
         public const string CartPosition = "cartPosition";
-        public const string Children = "children";
         public const string ColorName = "colorName";
         public const string Cues = "cues";
         public const string CueTargetNumber = "cueTargetNumber";
@@ -130,7 +130,10 @@
         //Group Cue Keys
         public const string CartColumns = "cartColumns";
         public const string CartRows = "cartRows";
-        public const string GroupMode = "mode";
+        public const string Children = "children";
+        public const string Go = "go";
+        public const string Mode = "mode";
+        public const string MoveCartCue = "moveCartCue";
         public const string PlaybackPositionId = "playbackPositionId";
         public const string PlaybackPosition = "playbackPosition"; //Implement on Group Cue
         public const string PlayheadId = "playheadId"; //Implement on Group Cue
@@ -269,10 +272,6 @@
         public const string Duration = "duration";
         public const string FullScreen = "fullScreen"; //Implement on Video Cue
 
-        
-
-        
-        
     }
 
     public static class QIdentifiers

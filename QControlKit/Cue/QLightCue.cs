@@ -30,60 +30,60 @@ namespace QControlKit.Cue
 
         public void collateAndStart()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.CollateAndStart}");
+            workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.CollateAndStart}");
         }
 
         public void prune()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.Prune}");
+            workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.Prune}");
         }
 
         public void pruneCommands()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.PruneCommands}");
+            workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.PruneCommands}");
         }
 
         public void removeLightCommandsMatching(string match)
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.RemoveLightCommandsMatching}", match);
+            workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.RemoveLightCommandsMatching}", match);
         }
 
         public void replaceLightCommand(string oldCommand, string newCommand)
         {
             if(this.workspace.versionParts[0] == "4" && int.Parse(this.workspace.versionParts[1]) >= 4)
             {
-                workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.ReplaceLightCommand}", oldCommand, newCommand);
+                workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.ReplaceLightCommand}", oldCommand, newCommand);
             }
             else
             {
-                workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.UpdateLightCommand}", oldCommand, newCommand);
+                workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.UpdateLightCommand}", oldCommand, newCommand);
             }
         }
 
         public void safeSort()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.SafeSort}");
+            workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.SafeSort}");
         }
 
         public void safeSortCommands()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.SafeSortCommands}");
+            workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.SafeSortCommands}");
         }
 
         public void setLight(string light, object setting)
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.SetLight}", light, setting);
+            workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.SetLight}", light, setting);
         }
 
         public void updateLightCommand(string oldCommand, string newCommand)
         {
             if (int.Parse(this.workspace.versionParts[0]) >= 4 && int.Parse(this.workspace.versionParts[1]) >= 4)
             {
-                workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.ReplaceLightCommand}", oldCommand, newCommand);
+                workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.ReplaceLightCommand}", oldCommand, newCommand);
             }
             else
             {
-                workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/{QOSCKey.UpdateLightCommand}", oldCommand, newCommand);
+                workspace.sendMessage($"/cue_id/{this.uid}/{QOSCKey.UpdateLightCommand}", oldCommand, newCommand);
             }
         }
 

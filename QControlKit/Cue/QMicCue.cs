@@ -18,20 +18,20 @@ namespace QControlKit.Cue
             {
                 return (int)propertyForKey(QOSCKey.Channels);
             }
-	    set
-	    {
-                setProperty(value, QOSCKey.Channels);
-	    }
+	        set
+	        {
+                    setProperty(value, QOSCKey.Channels);
+	        }
         }
         
-	public void setDefaultLevels()
+	    public void setDefaultLevels()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/setDefaultLevels");
+            workspace.sendMessage($"/cue_id/{this.uid}/setDefaultLevels");
         }
 
         public void setSilientLevels()
         {
-            workspace.sendMessage($"/cue_id/{this.propertyForKey(QOSCKey.UID)}/setSilentLevels");
+            workspace.sendMessage($"/cue_id/{this.uid}/setSilentLevels");
         }
     }
 }
