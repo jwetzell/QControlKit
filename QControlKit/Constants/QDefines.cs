@@ -229,6 +229,18 @@
         public const string OutputSize = "outputSize"; //Implement on Text Cue
 
         //Light Cue Keys
+        public const string AlwaysCollate = "alwaysCollate";
+        public const string CollateAndStart = "collateAndStart";
+        public const string LightCommandText = "lightCommandText";
+        public const string Prune = "prune";
+        public const string PruneCommands = "pruneCommands";
+        public const string RemoveLightCommandsMatching = "removeLightCommandsMatching";
+        public const string ReplaceLightCommand = "replaceLightCommand";
+        public const string SafeSort = "safeSort";
+        public const string SafeSortCommands = "safeSortCommands";
+        public const string SetLight = "setLight";
+        public const string UpdateLightCommand = "updateLightCommand";
+
         //Fade Cue Keys
         //Network Cue Keys
         public const string CustomString = "customString";
