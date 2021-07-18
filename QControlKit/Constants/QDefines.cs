@@ -231,10 +231,18 @@
         //Light Cue Keys
         //Fade Cue Keys
         //Network Cue Keys
+        public const string CustomString = "customString";
+        public const string MessageType = "messageType";
+        public const string QLabCommand = "qlabCommand";
+        public const string QLabCueNumber = "qlabCueNumber";
+        public const string QLabCueParameters = "qlabCueParameters";
+        public const string RawString = "rawString";
+        public const string UdpString = "udpString";
+
         //MIDI Cue Keys
 
         //Midi File Cue Keys
-        public const string Patch = "patch"; //Implement on Audio Cue and Video Cue
+        public const string Patch = "patch"; //Implement on Audio Cue and Video Cue and Network Cue
         public const string Rate = "rate"; //Implement on Audio Cue and Video Cue
 
         //Devamp Cue Keys
@@ -283,7 +291,7 @@
         public const string Default = "default"; //is this even an option?
     }
 
-    enum QTriggerAction
+    public enum QTriggerAction
     {
         Nothing = 0,
         Panics = 1,
@@ -292,20 +300,20 @@
         Hard_Stops_And_Restarts = 4
     }
 
-    enum QFadeMode
+    public enum QFadeMode
     {
         Absolute = 0,
         Relative = 1
     }
 
-    enum QContinueMode
+    public enum QContinueMode
     {
         NoContinue = 0,
         AutoContinue = 1,
         AutoFollow = 2
     }
 
-    enum QMSCCommand
+    public enum QMSCCommand
     {
         GO = 1,
         STOP = 2,
@@ -335,7 +343,7 @@
         CLOSE_CUE_PATH = 30,
     }
 
-    enum QMSCCommandFormat
+    public enum QMSCCommandFormat
     {
         All_Types = 127,
         Lighting_General = 1,
@@ -395,14 +403,14 @@
         Smoke_Pots = 100
     }
 
-    enum QNetworkMessageType
+    public enum QNetworkMessageType
     {
         QLAB = 1,
         OSC = 2,
         UDP = 3
     }
 
-    enum QNetworkQLabCommand
+    public enum QNetworkQLabCommand
     {
         start = 1,
         stop = 2,
@@ -427,7 +435,7 @@
         colorName = 21
     }
 
-    enum QRotationType
+    public enum QRotationType
     {
         THREE_D = 0,
         X = 1,
@@ -435,7 +443,7 @@
         Z = 3
     }
 
-    enum QVideoEffect
+    public enum QVideoEffect
     {
         Color_Controls = 1,
         Exposure = 2,
