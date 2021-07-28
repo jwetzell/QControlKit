@@ -35,6 +35,9 @@ namespace QControlKit
         public event QWorkspaceUpdatedHandler WorkspaceUpdated;
         public event QCueListChangedPlaybackPositionHandler CueListChangedPlaybackPosition;
         public event QWorkspaceConnectionErrorHandler WorkspaceConnectionError;
+        public event QWorkspaceDisconnectedHandler WorkspaceDisconnected;
+        public event QWorkspaceConnectedHandler WorkspaceConnected;
+
 
         private void Init()
         {
@@ -172,14 +175,14 @@ namespace QControlKit
             if(hasPasscode && passcode == null)
             {
                 Log.Error($"[workspace] *** workspace <{name}> requires a passcode but none was supplied.");
-                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = "badpass" });
+                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.BadPass });
                 return;
             }
 
             if (!client.connect())
             {
                 Log.Error($"[workspace] *** couldn't connect to server client is not connected.");
-                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = "unreachable" });
+                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.Error });
                 return;
             }
 
@@ -424,7 +427,7 @@ namespace QControlKit
             {
                 //clear passcode if there was one set in the connect() method
                 this.passcode = null;
-                Log.Error($"[workspace] *** Password for workspace {name} was incorrect!");
+                Log.Error($"[workspace] *** Password for workspace <{name}> was incorrect!");
             }
             else
             {
@@ -437,6 +440,7 @@ namespace QControlKit
         private void OnWorkspaceConnected(object source, QWorkspaceConnectedArgs args)
         {
             Log.Information($"[workspace] Connection to <{name}> successful, finishing things up.");
+            WorkspaceConnected?.Invoke(this, new QWorkspaceConnectedArgs());
             finishConnection();
         }
 
@@ -444,6 +448,7 @@ namespace QControlKit
         {
             //this might not be called with TCP?
             Log.Warning($"[workspace] *** Workspace has indicated it is disconnecting");
+            WorkspaceDisconnected?.Invoke(this, new QWorkspaceDisconnectedArgs());
         }
 
         private void OnCueListsUpdated(object source, QCueListsUpdatedArgs args)
