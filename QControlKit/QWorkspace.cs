@@ -78,7 +78,7 @@ namespace QControlKit
             client.CueUpdated += OnCueUpdated;
 
             this.server = server;
-            Log.Debug($"[workspace] <{name}> on {server.name} initialized.");
+            Log.Debug($"[workspace] <{name}> on <{server.name}> initialized.");
         }
 
         //updateWithDictionary
@@ -179,6 +179,7 @@ namespace QControlKit
             if (!client.connect())
             {
                 Log.Error($"[workspace] *** couldn't connect to server client is not connected.");
+                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = "unreachable" });
                 return;
             }
 
@@ -427,7 +428,7 @@ namespace QControlKit
             }
             else
             {
-                Log.Error($"[workspace] *** Unable to connect to workspace: {name} on server: {server.name}");
+                Log.Error($"[workspace] *** Unable to connect to workspace: <{name}> on server: <{server.name}>");
             }
 
             WorkspaceConnectionError?.Invoke(this, new QWorkspaceConnectionErrorArgs { status = args.status });
