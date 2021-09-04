@@ -62,15 +62,9 @@ namespace QControlKit
 
             foreach(var server in qServers)
             {
-                bool serverToBeRemoved = true;
-                foreach(var zeroconfHost in results){
-                    QServer existingServer = serverForAddress(zeroconfHost.IPAddress);
-                    if(server != null)
-                    {
-                        serverToBeRemoved = false;
-                    }
-                }
-                if (serverToBeRemoved)
+                IZeroconfHost found = results.ToList().Find(x => x.IPAddress.Equals(server.host));
+
+                if (found == null)
                 {
                     server.disconnect();
                     servers.Remove(server);
