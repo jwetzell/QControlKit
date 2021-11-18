@@ -30,7 +30,11 @@ namespace QControlKitXamDemo
             {
                 Task.Run(async () =>
                 {
-                    browser.ProbeForQLabInstances();
+                    Device.BeginInvokeOnMainThread(() =>
+                    {
+                        browser.ProbeForQLabInstances();
+                    });
+                    
                 });
                 return true;
             });

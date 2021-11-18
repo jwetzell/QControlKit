@@ -59,7 +59,7 @@ namespace QControlKit
 
         public void sendMessage(string address, params object[] args)
         {
-            tcpClient.Send(new OscMessage(address, args));
+            tcpClient.QueueForSending(new OscMessage(address, args));
             Log.Debug($"[client] send message {address} : {args}");
         }
 

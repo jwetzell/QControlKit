@@ -26,13 +26,17 @@ namespace QControlKit
 
         public async void ProbeForQLabInstances()
         {
+            Log.Debug("[qbrowser] probing for instances");
+
             IReadOnlyList<IZeroconfHost> results = await
                     ZeroconfResolver.ResolveAsync(QBonjour.TCPService,TimeSpan.FromSeconds(3));
 
             foreach (var zeroconfHost in results)
             {
+                Log.Debug($"[qbrowser] found host {zeroconfHost.IPAddress}:{zeroconfHost.DisplayName}");
                 foreach (var service in zeroconfHost.Services)
                 {
+                    Log.Debug($"[qbrowser] found {service.Key}:{service.Value}");
                     if (service.Key.Equals(QBonjour.TCPService))
                     {
 
