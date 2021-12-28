@@ -1,4 +1,6 @@
-﻿namespace QControlKit.Events
+﻿using System;
+
+namespace QControlKit.Events
 {
     public delegate void QServerFoundHandler(object source, QServerFoundArgs args);
     public delegate void QServerLostHandler(object source, QServerLostArgs args);
@@ -15,7 +17,6 @@
     public delegate void QWorkspaceDisconnectedHandler(object source, QWorkspaceDisconnectedArgs args);
     public delegate void QWorkspaceConnectionErrorHandler(object source, QWorkspaceConnectionErrorArgs args);
     public delegate void QQLabPreferencesUpdatedHandler(object source, QQLabPreferencesUpdatedArgs args);
-
 
     public delegate void QCueUpdatedHandler(object source, QCueUpdatedArgs args);
     public delegate void QCuePropertiesUpdatedHandler(object source, QCuePropertiesUpdatedArgs args);

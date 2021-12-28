@@ -103,6 +103,7 @@ namespace QControlKit
                 return (parts.Length == 4 && parts[3].Equals("connect"));
             }
         }
+
         #endregion
 
         //host method

@@ -24,9 +24,6 @@ namespace QControlKit
 
         private QCue root;
 
-        private Timer heartbeatTimer;
-        private int heartbeatAttempts;
-
         public bool defaultSendUpdatesOSC;
 
         public string version;
@@ -37,7 +34,6 @@ namespace QControlKit
         public event QWorkspaceConnectionErrorHandler WorkspaceConnectionError;
         public event QWorkspaceDisconnectedHandler WorkspaceDisconnected;
         public event QWorkspaceConnectedHandler WorkspaceConnected;
-
 
         private void Init()
         {
@@ -219,8 +215,6 @@ namespace QControlKit
             Log.Information($"[workspace] disconnecting from <{name}>");
             if (!connected)
                 return;
-            if (heartbeatTimer != null)
-                stopHeartbeat();
             stopReceivingUpdates();
             disconnectFromWorkspace();
 
@@ -269,39 +263,7 @@ namespace QControlKit
         #endregion
 
         #region Heartbeat
-        //TODO
-        public void startHeartbeat()
-        {
-            clearHeartbeatTimeout();
-            sendHeartbeat();
-        }
-
-        public void stopHeartbeat()
-        {
-            clearHeartbeatTimeout();
-            heartbeatAttempts = -1;
-        }
-
-        public void clearHeartbeatTimeout()
-        {
-            heartbeatTimer.Stop();
-            heartbeatTimer = null;
-            heartbeatAttempts = 0;
-            //TODO
-        }
-
-        public void sendHeartbeat()
-        {
-            client.sendMessage("/thump");
-            //TODO
-        }
-
-        public void heartbeatTimeout(object sender, ElapsedEventArgs e)
-        {
-            //TODO
-        }
-
-
+        //TODO? Do I even need this if I only allow TCP and just watch for a change in the state of the TCP connection
 
         #endregion
 
