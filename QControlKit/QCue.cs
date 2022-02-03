@@ -571,6 +571,45 @@ namespace QControlKit
             }
         }
 
+        public QTriggerAction secondTriggerAction
+        {
+            get
+            {
+                return (QTriggerAction)propertyForKey(QOSCKey.SecondTriggerAction);
+            }
+            set
+            {
+                setProperty(value, QOSCKey.SecondTriggerAction);
+            }
+        }
+
+        public bool secondTriggerOnRelease
+        {
+            get
+            {
+                var val = (int)propertyForKey(QOSCKey.SecondTriggerOnRelease);
+                if (val == 0)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            set
+            {
+                if (value)
+                {
+                    setProperty(0, QOSCKey.SecondTriggerOnRelease);
+                }
+                else
+                {
+                    setProperty(1, QOSCKey.SecondTriggerOnRelease);
+                }
+            }
+        }
+
         //TODO add quaternion property and setter
         public Size surfaceSize() { throw new NotImplementedException(); }
         public Size cueSize() { throw new NotImplementedException(); }
@@ -936,6 +975,20 @@ namespace QControlKit
         public void togglePause() { workspace.togglePauseCue(this);  }
         public void preview() { workspace.previewCue(this);  }
         public void panic() { workspace.panicCue(this); }
+        public void playheadNext()
+        {
+            if (this.type == QCueType.CueList)
+            {
+                workspace.sendMessageForCue(this, "playhead/next");
+            }
+        }
+        public void playheadPrevious()
+        {
+            if (this.type == QCueType.CueList)
+            {
+                workspace.sendMessageForCue(this, "playhead/previous");
+            }
+        }
         #endregion
 
 

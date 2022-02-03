@@ -252,6 +252,7 @@ namespace QControlKit
         public void fetchCueLists() { client.sendMessage($"{workspacePrefix}/cueLists"); }
         public void fetchPlaybackPositionForCue(QCue cue) { client.sendMessage(addressForCue(cue, QOSCKey.PlaybackPositionId)); } //EventHandler for this? can I use the CueListPlaybackPosition one?
         public void go() { client.sendMessage($"{workspacePrefix}/go"); }
+        public void go(string cueNumber) { client.sendMessage($"{workspacePrefix}/go/{cueNumber}"); }
         public void save() { client.sendMessage($"{workspacePrefix}/save"); }
         public void undo() { client.sendMessage($"{workspacePrefix}/undo"); }
         public void redo() { client.sendMessage($"{workspacePrefix}/redo"); }
@@ -356,6 +357,11 @@ namespace QControlKit
             if (!address.StartsWith(workspacePrefix))
                 address = workspacePrefix + address;
             client.sendMessage(address, args);
+        }
+
+        public void sendMessageForCue(QCue cue, string action)
+        {
+            client.sendMessage(addressForCue(cue, action));
         }
 
         private string addressForCue(QCue cue, string action)
