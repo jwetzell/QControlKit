@@ -32,15 +32,11 @@ namespace SharpOSC
 
         private Queue<OscPacket> SendQueue = new Queue<OscPacket>();
 
-        private Thread receivingThread;
         private Thread sendThread;
 
         string _address;
 
-        byte END = 0xc0;
-        byte ESC = 0xdb;
-        byte ESC_END = 0xDC;
-        byte ESC_ESC = 0xDD;
+        
 
         SimpleTcpClient simpleClient;
 
@@ -64,7 +60,7 @@ namespace SharpOSC
 
         private void DataReceived(object sender, DataReceivedEventArgs e)
         {
-            List<byte[]> messages = SlipDecode(e.Data);
+            List<byte[]> messages = SlipFrame.Decode(e.Data);
             for(int i = 0; i < messages.Count; i++)
             {
                 OscPacket packet = OscPacket.GetPacket(messages[i]);
@@ -122,7 +118,7 @@ namespace SharpOSC
 
         public void Send(byte[] message)
         {
-            byte[] slipData = SlipEncode(message);
+            byte[] slipData = SlipFrame.Encode(message);
             simpleClient.Send(slipData);
         }
 
@@ -141,54 +137,6 @@ namespace SharpOSC
                 else
                     return simpleClient.IsConnected;
             }
-        }
-
-        public byte[] SlipEncode(byte[] data)
-        {
-            List<byte> slipData = new List<byte>();
-
-            byte[] esc_end = { ESC, ESC_END };
-            byte[] esc_esc = { ESC, ESC_ESC };
-            byte[] end = { END };
-
-            int length = data.Length;
-            for (int i = 0; i < length; i++)
-            {
-                if (data[i] == END)
-                {
-                    slipData.AddRange(esc_end);
-                }
-                else if (data[i] == ESC)
-                {
-                    slipData.AddRange(esc_esc);
-                }
-                else
-                {
-                    slipData.Add(data[i]);
-                }
-            }
-            slipData.AddRange(end);
-            return slipData.ToArray();
-        }
-
-        public List<byte[]> SlipDecode(byte[] data)
-        {
-            List<byte[]> messages = new List<byte[]>();
-
-            List<byte> buffer = new List<byte>();
-            for(int i = 0; i < data.Length; i++)
-            {
-                if(data[i] == END && buffer.Count > 0)
-                {
-                    messages.Add(buffer.ToArray());
-                    buffer.Clear();
-                }
-                else if (data[i] != END)
-                {
-                    buffer.Add(data[i]);
-                }
-            }
-            return messages;
         }
 
         public void Close()
