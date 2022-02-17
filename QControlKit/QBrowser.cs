@@ -70,9 +70,11 @@ namespace QControlKit
 
                 if (found == null)
                 {
-                    server.disconnect();
-                    servers.Remove(server);
                     Log.Information($"[qbrowser] Lost {server.name} : {server.host} : {server.port}");
+                    server.disconnect();
+                    Log.Information($"[qbrowser] after server disconnect()");
+
+                    servers.Remove(server);
                     OnServerLost(server);
                 }
             }
@@ -121,7 +123,8 @@ namespace QControlKit
 
         public void Close()
         {
-            foreach(var server in servers)
+            Log.Information($"[qbrowser] Close requested");
+            foreach (var server in servers)
             {
                 server.disconnect();
             }

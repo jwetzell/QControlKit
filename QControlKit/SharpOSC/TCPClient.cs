@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Net.Sockets;
 using System.Threading;
 using Serilog;
+using SuperSimpleTcp;
 
 namespace SharpOSC
 {
@@ -38,32 +36,64 @@ namespace SharpOSC
         private Thread sendThread;
 
         string _address;
-        TcpClient client;
 
         byte END = 0xc0;
         byte ESC = 0xdb;
         byte ESC_END = 0xDC;
         byte ESC_ESC = 0xDD;
 
+        SimpleTcpClient simpleClient;
+
 
         public TCPClient(string address, int port)
         {
             _port = port;
             _address = address;
+
+            simpleClient = new SimpleTcpClient(address, port);
+            simpleClient.Events.Connected += Connected;
+            simpleClient.Events.Disconnected += Disconnected;
+            simpleClient.Events.DataReceived += DataReceived;
+            simpleClient.Logger = Log.Debug;
+        }
+
+        public static string ByteArrayToString(byte[] ba)
+        {
+            return BitConverter.ToString(ba).Replace("-", "");
+        }
+
+        private void DataReceived(object sender, DataReceivedEventArgs e)
+        {
+            List<byte[]> messages = SlipDecode(e.Data);
+            for(int i = 0; i < messages.Count; i++)
+            {
+                OscPacket packet = OscPacket.GetPacket(messages[i]);
+                OscMessage responseMessage = (OscMessage)packet;
+                OnMessageReceived(responseMessage);
+            }
+        }
+
+        private void Disconnected(object sender, ConnectionEventArgs e)
+        {
+            Log.Debug("[tcpClient] connection to " + e.IpPort + " was disconnected");
+        }
+
+        private void Connected(object sender, ConnectionEventArgs e)
+        {
+            Log.Debug($"[tcpclient] connected to <{e.IpPort}>");
         }
 
         public bool Connect()
         {
             try
             {
-                client = new TcpClient(Address, Port);
-                receivingThread = new Thread(ReceiveLoop);
-                receivingThread.Start();
+                simpleClient.Connect();
 
                 sendThread = new Thread(SendLoop);
+                sendThread.IsBackground = true;
                 sendThread.Start();
 
-                Log.Debug($"[tcpclient] connected to <{Address}:{Port}>");
+                
                 return true;
             } 
             catch (Exception e)
@@ -71,7 +101,6 @@ namespace SharpOSC
                 Log.Error(e.Message);
                 return false;
             }
-            
         }
 
         public void QueueForSending(OscPacket packet)
@@ -81,7 +110,7 @@ namespace SharpOSC
 
         private void SendLoop()
         {
-            while (client != null && client.Connected)
+            while (simpleClient != null && simpleClient.IsConnected)
             {
                 if(SendQueue.Count > 0)
                 {
@@ -94,8 +123,7 @@ namespace SharpOSC
         public void Send(byte[] message)
         {
             byte[] slipData = SlipEncode(message);
-            NetworkStream netStream = client.GetStream();
-            netStream.Write(slipData.ToArray(), 0, slipData.ToArray().Length);
+            simpleClient.Send(slipData);
         }
 
         public void Send(OscPacket packet)
@@ -108,57 +136,10 @@ namespace SharpOSC
         {
             get
             {
-                if (client == null)
+                if (simpleClient == null)
                     return false;
                 else
-                    return client.Connected;
-            }
-        }
-
-        public void ReceiveLoop()
-        {
-            while (client != null && client.Connected)
-            {
-                Receive();
-            }
-            //Log.Debug("[tcpclient] - ReceiveLoop has exited");
-        }
-
-        public void Receive()
-        {
-            Random random = new Random();
-            int num = random.Next(1000);
-            try
-            {
-                NetworkStream netStream = client.GetStream();
-                netStream.ReadTimeout = 250;
-                List<byte> responseData = new List<byte>();
-                if (netStream.CanRead)
-                {
-                    //var watch = System.Diagnostics.Stopwatch.StartNew();
-                    byte[] buffer = new byte[256];
-
-                    int bytesRead = 0;
-                    int reads = 0;
-                    do
-                    {
-                        bytesRead = netStream.Read(buffer, 0, buffer.Length);
-                        responseData.AddRange(buffer);
-                        reads += 1;
-                        Thread.Sleep(1);
-                        //Log.Debug("Thread " + num + ":  Bytes read: " + bytesRead + " - " + Encoding.UTF8.GetString(buffer));
-                    } while (netStream.DataAvailable);
-
-                    //Console.WriteLine("Raw TCP In: " + System.Text.Encoding.UTF8.GetString(responseData.ToArray()));
-                    OscPacket packet = OscPacket.GetPacket(responseData.Skip(1).ToArray());
-                    OscMessage responseMessage = (OscMessage)packet;
-                    //watch.Stop();
-                    //Console.WriteLine($"TCPCLient - message receive took {watch.ElapsedMilliseconds}ms and {reads} reads");
-                    OnMessageReceived(responseMessage);
-                }
-            } catch(Exception e)
-            {
-                //Console.WriteLine("TCPSENDER - Receive Exception: " + e.ToString());
+                    return simpleClient.IsConnected;
             }
         }
 
@@ -190,15 +171,35 @@ namespace SharpOSC
             return slipData.ToArray();
         }
 
+        public List<byte[]> SlipDecode(byte[] data)
+        {
+            List<byte[]> messages = new List<byte[]>();
+
+            List<byte> buffer = new List<byte>();
+            for(int i = 0; i < data.Length; i++)
+            {
+                if(data[i] == END && buffer.Count > 0)
+                {
+                    messages.Add(buffer.ToArray());
+                    buffer.Clear();
+                }
+                else if (data[i] != END)
+                {
+                    buffer.Add(data[i]);
+                }
+            }
+            return messages;
+        }
+
         public void Close()
         {
-            if (client != null)
+            Log.Information("[tcpclient] Close() was requested");
+            if (simpleClient != null)
             {
-                if (client.Connected)
+                if (simpleClient.IsConnected)
                 {
-                    Log.Debug($"[tcpClient] closing connection to {Address}");
-                    client.GetStream().Close();
-                    client.Close();
+                    Log.Information($"[tcpClient] closing connection to {Address}");
+                    simpleClient.Disconnect();
                 }
             }
         }

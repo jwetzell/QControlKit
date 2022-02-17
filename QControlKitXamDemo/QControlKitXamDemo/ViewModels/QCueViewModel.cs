@@ -5,6 +5,7 @@ using Xamarin.Forms;
 using Serilog;
 using QControlKit.Events;
 using QControlKit.Constants;
+using System;
 
 namespace QControlKitXamDemo.ViewModels
 {
@@ -26,13 +27,19 @@ namespace QControlKitXamDemo.ViewModels
         {
             foreach(var property in args.properties)
             {
-                Log.Debug($"[cueviewmodel] property <{property}> has been updated.");
+                Log.Debug($"[cueviewmodel] property <{property}> has been updated for cue {name}.");
                 if (property.Equals(QOSCKey.Name) || property.Equals(QOSCKey.ListName))
                 {
                     OnPropertyChanged("name");
                 }else if (property.Equals(QOSCKey.ColorName))
                 {
                     OnPropertyChanged("color");
+                }else if (property.Equals(QOSCKey.ActionElapsed))
+                {
+                    OnPropertyChanged("actionElapsed");
+                }else if (property.Equals(QOSCKey.IsBroken) || property.Equals(QOSCKey.IsRunning))
+                {
+                    OnPropertyChanged("status");
                 }
             }
         }
@@ -81,6 +88,34 @@ namespace QControlKitXamDemo.ViewModels
             set
             {
                 cue.color = new QColor("none");
+            }
+        }
+
+        public string actionElapsed
+        {
+            get
+            {
+                TimeSpan time = TimeSpan.FromSeconds(cue.actionElapsed);
+                
+                return time.ToString(@"mm\:ss\:ff");
+            }
+        }
+
+        public string status
+        {
+            get
+            {
+                if (cue.IsRunning)
+                {
+                    return "running";
+                }else if (cue.IsBroken)
+                {
+                    return "broken";
+                }
+                else
+                {
+                    return " ";
+                }
             }
         }
 

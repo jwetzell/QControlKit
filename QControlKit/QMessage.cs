@@ -143,5 +143,21 @@ namespace QControlKit
             }
         }
 
+        override
+        public string ToString()
+        {
+            string stringified = "";
+
+            stringified += $"\nAddress: {this.address}\nArguments: \n";
+           
+
+            for(int i = 0; i<this.arguments.Count; i++)
+            {
+                object argument = this.arguments[i];
+                stringified += $"\targ {i + 1}: {argument.ToString()}\n";
+            }
+            return stringified;
+        }
+
     }
 }

@@ -3,8 +3,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Timers;
-
 using QControlKit.Events;
 using QControlKit.Constants;
 
@@ -217,15 +215,13 @@ namespace QControlKit
                 return;
             stopReceivingUpdates();
             disconnectFromWorkspace();
-
-            connected = false;
             client.disconnect();
-
+            connected = false;
         }
 
         public void temporarilyDisconnect()
         {
-            //TODO
+            //TODO what does this mean?
         }
 
         #endregion  
@@ -245,6 +241,7 @@ namespace QControlKit
         #region Workspace Methods
         public void disconnectFromWorkspace() { client.sendMessage($"{workspacePrefix}/disconnect"); }
         public void startReceivingUpdates() { client.sendMessage($"{workspacePrefix}/updates", 1); }
+        public void getPropertyForActive(string prop) { client.sendMessage($"{workspacePrefix}/cue/active/{prop}"); }
         public void stopReceivingUpdates() { client.sendMessage($"{workspacePrefix}/updates", 0); }
         public void enableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 1); }
         public void disableAlwaysReply() { client.sendMessage($"{workspacePrefix}/alwaysReply", 0); }
@@ -320,18 +317,48 @@ namespace QControlKit
 
         public void fetchDefaultPropertiesForCue(QCue cue)
         {
-            List<string> keys = new List<string> {  QOSCKey.UID, QOSCKey.Number, QOSCKey.Name, 
-                                            QOSCKey.ListName, QOSCKey.Type, QOSCKey.ColorName, 
-                                            QOSCKey.Flagged, QOSCKey.Armed, QOSCKey.Notes };
+            List<string> keys = new List<string> {
+                QOSCKey.UID,
+                QOSCKey.Number,
+                QOSCKey.Name, 
+                QOSCKey.ListName,
+                QOSCKey.Type,
+                QOSCKey.ColorName, 
+                QOSCKey.Flagged,
+                QOSCKey.Armed,
+                QOSCKey.IsRunning,
+                QOSCKey.IsBroken,
+                QOSCKey.Parent,
+                QOSCKey.Notes
+            };
+
             fetchPropertiesForCue(cue, keys.ToArray(), false);
         }
 
         public void fetchBasicPropertiesForCue(QCue cue)
         {
-            List<string> keys = new List<string> {  QOSCKey.Name, QOSCKey.ListName, QOSCKey.Number, QOSCKey.FileTarget, QOSCKey.CueTargetNumber, 
-                                            QOSCKey.HasFileTargets, QOSCKey.HasCueTargets, QOSCKey.Armed, QOSCKey.ColorName, 
-                                            QOSCKey.ContinueMode, QOSCKey.Flagged, QOSCKey.PreWait, QOSCKey.PostWait, 
-                                            QOSCKey.Duration, QOSCKey.AllowsEditingDuration, QOSCKey.Notes };
+            List<string> keys = new List<string> {
+                QOSCKey.Name,
+                QOSCKey.ListName,
+                QOSCKey.Number,
+                QOSCKey.FileTarget,
+                QOSCKey.CueTargetNumber, 
+                QOSCKey.HasFileTargets,
+                QOSCKey.HasCueTargets,
+                QOSCKey.Armed,
+                QOSCKey.ColorName,
+                QOSCKey.ContinueMode,
+                QOSCKey.Flagged,
+                QOSCKey.PreWait,
+                QOSCKey.PostWait, 
+                QOSCKey.Duration,
+                QOSCKey.AllowsEditingDuration,
+                QOSCKey.IsBroken,
+                QOSCKey.IsRunning,
+                QOSCKey.IsLoaded,
+                QOSCKey.Notes
+            };
+
             if (cue.IsGroup)
                 keys.Add(QOSCKey.Children);
             fetchPropertiesForCue(cue, keys.ToArray(), false);
@@ -502,7 +529,7 @@ namespace QControlKit
                 cueList.setProperty(args.cueID, QOSCKey.PlaybackPositionId, false);
             }
 
-            Log.Debug($"[workspace] cue list <{args.cueListID}> playback position changed to <{args.cueID}>");
+            Log.Information($"[workspace] cue list <{args.cueListID}> playback position changed to <{args.cueID}>");
             CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = args.cueListID, cueID = args.cueID });
 
         }

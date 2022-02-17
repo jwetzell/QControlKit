@@ -133,6 +133,9 @@
     </PackageReference>
     <PackageReference Include="Xamarin.Forms" Version="5.0.0.2337" />
     <PackageReference Include="Xamarin.Essentials" Version="1.7.1" />
+    <PackageReference Include="SuperSimpleTcp">
+      <Version>2.6.0</Version>
+    </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />
   <ItemGroup>
@@ -140,5 +143,8 @@
       <Project>{20D2D0D8-A518-42DC-BAB8-CF098CDF03C4}</Project>
       <Name>QControlKitXamDemo</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <BundleResource Include="Resources\materialdesignicons-webfont.ttf" />
   </ItemGroup>
 </Project>

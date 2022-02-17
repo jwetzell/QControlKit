@@ -18,6 +18,7 @@ namespace QControlKit
         public List<QCue> childCues;
         public Dictionary<string, QCue> childCuesUIDMap;
 
+
         public int sortIndex;
         public int nestLevel;
 
@@ -43,32 +44,9 @@ namespace QControlKit
         {
             init();
             this.workspace = workspace;
-
-            //this breaks things??? 
-            //it definitely is in the original but somehow the recursion is not working as I expect..
-            //but cue population still works without this as child cues are populated later
-
-            /*JToken children = dict[QOSCKey.Cues];
-            if(children != null && children.Type == JTokenType.Array)
-            {
-                Log.Debug($"[cue] new cue being created with {children.Count()} childCues");
-                foreach (var aChildDict in children)
-                {
-                    string uid = (string)aChildDict[QOSCKey.UID];
-                    //Log.Debug($"[cue] childDict with uid: {uid} being processed");
-                    if (uid == null)
-                        continue;
-                    string name = dict[QOSCKey.UID].ToString();
-                    Log.Debug($"[cue] calling new cue from {name}");
-
-                    //QCue child = new QCue(aChildDict, workspace); 
-
-                    *//*childCues.Add(child);
-                    childCuesUIDMap.Add(uid, child);*//*
-                }
-            }*/
-
             updatePropertiesWithDictionary(dict);
+            workspace.fetchBasicPropertiesForCue(this);
+
         }
 
         public QCue(JToken dict, QWorkspace workspace, int nestLevel)
@@ -76,31 +54,8 @@ namespace QControlKit
             init();
             this.workspace = workspace;
             this.nestLevel = nestLevel + 1;
-            //this breaks things??? 
-            //it definitely is in the original but somehow the recursion is not working as I expect..
-            //but cue population still works without this as child cues are populated later
-
-            /*JToken children = dict[QOSCKey.Cues];
-            if(children != null && children.Type == JTokenType.Array)
-            {
-                Log.Debug($"[cue] new cue being created with {children.Count()} childCues");
-                foreach (var aChildDict in children)
-                {
-                    string uid = (string)aChildDict[QOSCKey.UID];
-                    //Log.Debug($"[cue] childDict with uid: {uid} being processed");
-                    if (uid == null)
-                        continue;
-                    string name = dict[QOSCKey.UID].ToString();
-                    Log.Debug($"[cue] calling new cue from {name}");
-
-                    //QCue child = new QCue(aChildDict, workspace); 
-
-                    *//*childCues.Add(child);
-                    childCuesUIDMap.Add(uid, child);*//*
-                }
-            }*/
-
             updatePropertiesWithDictionary(dict);
+            workspace.fetchBasicPropertiesForCue(this);
         }
 
         public void init()
@@ -244,7 +199,14 @@ namespace QControlKit
         {
             get
             {
-                return propertyForKey(QOSCKey.Parent).ToString();
+                if(propertyForKey(QOSCKey.Parent) != null)
+                {
+                    return propertyForKey(QOSCKey.Parent).ToString();
+                }
+                else
+                {
+                    return "";
+                }
             }
         }
         public string playbackPositionID { 
@@ -301,7 +263,14 @@ namespace QControlKit
         {
             get
             {
-                return propertyForKey(QOSCKey.ListName).ToString();
+                if(propertyForKey(QOSCKey.ListName) == null)
+                {
+                    return "";
+                }
+                else
+                {
+                    return propertyForKey(QOSCKey.ListName).ToString();
+                }
             }
             set
             {
@@ -353,46 +322,39 @@ namespace QControlKit
                 if (workspace.connectedToQLab3 || workspace.isOlderThanVersion("4.2.0"))
                     return false;
 
-                bool overridden = (bool)propertyForKey(QOSCKey.IsOverridden);
-
-                if (overridden)
-                    return true;
                 foreach (var cue in cues)
                 {
                     if (cue.IsOverridden)
                         return true;
                 }
-                return false;
+
+                return getBoolForKey(QOSCKey.IsOverridden);
             }
         }
         public bool IsBroken
         {
             get
             {
-                if ((bool)propertyForKey(QOSCKey.IsBroken))
-                    return true;
-                foreach(var cue in cues)
+                foreach (var cue in cues)
                 {
                     if (cue.IsBroken)
                         return true;
                 }
-                return false;
+
+                return getBoolForKey(QOSCKey.IsBroken);
             }
         }
         public bool IsRunning
         {
             get
             {
-                bool running = (bool)propertyForKey(QOSCKey.IsRunning);
-
-                if (running)
-                    return true;
-                foreach(var cue in cues)
+                foreach (var cue in cues)
                 {
                     if (cue.IsRunning)
                         return true;
                 }
-                return false;
+
+                return getBoolForKey(QOSCKey.IsRunning);
             }
         }
         public bool IsTailingOut
@@ -402,16 +364,13 @@ namespace QControlKit
                 if (workspace.connectedToQLab3)
                     return false;
 
-                bool tailingOut = (bool)propertyForKey(QOSCKey.IsTailingOut);
-
-                if (tailingOut)
-                    return true;
-                foreach(var cue in cues)
+                foreach (var cue in cues)
                 {
                     if (cue.IsTailingOut)
                         return true;
                 }
-                return false;
+
+                return getBoolForKey(QOSCKey.IsTailingOut);
             }
         }
         public bool IsPanicking
@@ -421,16 +380,13 @@ namespace QControlKit
                 if (workspace.connectedToQLab3)
                     return false;
 
-                bool panicking = (bool)propertyForKey(QOSCKey.IsPanicking);
-
-                if (panicking)
-                    return true;
                 foreach (var cue in cues)
                 {
                     if (cue.IsPanicking)
                         return true;
                 }
-                return false;
+
+                return getBoolForKey(QOSCKey.IsPanicking);
             }
         }
         public bool IsGroup 
@@ -568,6 +524,23 @@ namespace QControlKit
                     setProperty("none", QOSCKey.ColorName);
                 else
                     setProperty(value, QOSCKey.ColorName);
+            }
+        }
+
+
+        public float actionElapsed
+        {
+            get
+            {
+                object secs = propertyForKey(QOSCKey.ActionElapsed);
+                if (secs != null)
+                {
+                    return float.Parse(secs.ToString());
+                }
+                else
+                {
+                    return 0F;
+                }
             }
         }
 
@@ -827,6 +800,32 @@ namespace QControlKit
             }
             return null;
         }
+
+        public bool getBoolForKey(string key)
+        {
+            if (propertyForKey(key) != null)
+            {
+                object prop = propertyForKey(key);
+                //Log.Warning($"{listName} IsBroken: {propertyForKey(QOSCKey.IsBroken).ToString()} {prop.GetType().ToString()}");
+                if(prop.GetType() == typeof(Boolean)){
+                    return (bool)prop;
+                }
+                else if (prop.GetType() == typeof(JValue))
+                {
+                    JValue value = (JValue)prop;
+                    return (bool)value.Value;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public object propertyForKey(string key)
         {
             //TODO: implerment special key checks color, surfaceName, patchDescription, 
@@ -996,7 +995,10 @@ namespace QControlKit
         #region Event Handling
         void OnCuePropertiesUpdated(List<string> properties)
         {
-            Log.Debug($"[cue] <{nonEmptyName}> properties have been updated.");
+            if(parentID != null && parentID != "")
+            {
+                workspace.fetchBasicPropertiesForCue(workspace.cueWithID(parentID));
+            }
             CuePropertiesUpdated?.Invoke(this, new QCuePropertiesUpdatedArgs { properties = properties });
         } 
         #endregion

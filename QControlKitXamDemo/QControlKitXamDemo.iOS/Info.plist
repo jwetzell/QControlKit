@@ -40,5 +40,9 @@
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Scan network for QLab instances</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>materialdesignicons-webfont.ttf</string>
+	</array>
 </dict>
 </plist>

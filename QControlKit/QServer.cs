@@ -111,6 +111,7 @@ namespace QControlKit
 
         public void disconnect()
         {
+            Log.Information($"[server] disconnect requested for server <{name}>");
             foreach (var workspace in workspaces)
             {
                 if (workspace.connected)

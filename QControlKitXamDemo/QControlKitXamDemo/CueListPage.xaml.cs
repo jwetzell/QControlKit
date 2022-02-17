@@ -95,7 +95,7 @@ namespace QControlKitXamDemo
                 HorizontalOptions = LayoutOptions.StartAndExpand,
                 VerticalTextAlignment = TextAlignment.Center,
             };
-            cueLabel.SetBinding(Label.TextProperty, "name", BindingMode.OneWay);
+            cueLabel.SetBinding(Label.TextProperty, "status", BindingMode.OneWay);
             var cueBackground = new Frame
             {
                 BindingContext = qCueViewModel,

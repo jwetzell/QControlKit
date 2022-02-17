@@ -52,7 +52,7 @@ namespace QControlKit
 
         public void disconnect()
         {
-            Log.Debug($"[client] disconnecting from {tcpClient.Address}");
+            Log.Information($"[client] disconnecting from {tcpClient.Address}");
             tcpClient.Close();
         }
 
@@ -60,7 +60,7 @@ namespace QControlKit
         public void sendMessage(string address, params object[] args)
         {
             tcpClient.QueueForSending(new OscMessage(address, args));
-            Log.Debug($"[client] send message {address} : {args}");
+            Log.Information($"[client] send message {address} : {args}");
         }
 
         private void ProcessMessage(object source, MessageEventArgs args)
@@ -97,7 +97,7 @@ namespace QControlKit
                     }
                     else
                     {
-                        Log.Warning($"[client] unhandled reply from cue: Type: {data.Type} value: {message.response}");
+                        Log.Error($"[client] unhandled reply from cue: Type: {data.Type} value: {message.response}");
                     }
 
                 }
@@ -118,7 +118,7 @@ namespace QControlKit
                 }
                 else
                 {
-                    Log.Warning($"[client] unhandled reply message: {message.address}");
+                    Log.Error($"[client] unhandled reply message: {message.address}");
                 }
             }
             else if(message.IsUpdate) {
@@ -162,12 +162,12 @@ namespace QControlKit
                 }
                 else
                 {
-                    Log.Warning($"[client] unhandled update message: {message.address}");
+                    Log.Error($"[client] unhandled update message: {message.address}");
                 }
             }
             else
             {
-                Log.Warning($"[client] unhandled message: {message.address}");
+                Log.Error($"[client] unhandled message: {message.address}");
             }
         }
 
