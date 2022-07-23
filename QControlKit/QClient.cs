@@ -68,6 +68,9 @@ namespace QControlKit
 
             QMessage message = new QMessage(args.Message);
 
+            Log.Verbose(message.ToString());
+
+
             if (message.IsReply)
             {
                 JToken data = message.response;

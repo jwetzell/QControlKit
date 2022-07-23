@@ -70,10 +70,9 @@ namespace QControlKit
 
                 if (found == null)
                 {
-                    Log.Information($"[qbrowser] Lost {server.name} : {server.host} : {server.port}");
+                    Log.Information($"[qbrowser] Lost {server.name} : {server.host} : {server.port} disconnecting");
                     server.disconnect();
-                    Log.Information($"[qbrowser] after server disconnect()");
-
+                    Log.Verbose($"[qbrowser] after server disconnect()");
                     servers.Remove(server);
                     OnServerLost(server);
                 }
