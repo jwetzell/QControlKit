@@ -53,7 +53,7 @@ namespace QControlKitXamDemo
                 QCue selectedCue = connectedWorkspace.cueWithID(args.cueID);
                 if(selectedCue != null) //TODO: I think this being null is the result of a race condition?
                 {
-                    connectedWorkspace.fetchDefaultPropertiesForCue(selectedCue);
+                    connectedWorkspace.fetchBasicPropertiesForCue(selectedCue);
                     selectedCueGrid.BindingContext = new QCueViewModel(selectedCue, false);
                     if (cueGridDict.ContainsKey(args.cueID))
                     {

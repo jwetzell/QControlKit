@@ -319,17 +319,12 @@ namespace QControlKit
         {
             List<string> keys = new List<string> {
                 QOSCKey.UID,
-                QOSCKey.Number,
-                QOSCKey.Name, 
-                QOSCKey.ListName,
-                QOSCKey.Type,
-                QOSCKey.ColorName, 
                 QOSCKey.Flagged,
                 QOSCKey.Armed,
                 QOSCKey.IsRunning,
                 QOSCKey.IsBroken,
+                QOSCKey.IsLoaded,
                 QOSCKey.Parent,
-                QOSCKey.Notes
             };
 
             fetchPropertiesForCue(cue, keys.ToArray(), false);

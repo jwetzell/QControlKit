@@ -45,8 +45,6 @@ namespace QControlKit
             init();
             this.workspace = workspace;
             updatePropertiesWithDictionary(dict);
-            workspace.fetchBasicPropertiesForCue(this);
-
         }
 
         public QCue(JToken dict, QWorkspace workspace, int nestLevel)
@@ -55,7 +53,6 @@ namespace QControlKit
             this.workspace = workspace;
             this.nestLevel = nestLevel + 1;
             updatePropertiesWithDictionary(dict);
-            workspace.fetchBasicPropertiesForCue(this);
         }
 
         public void init()
