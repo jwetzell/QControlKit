@@ -26,6 +26,7 @@ namespace SharpOSC
                     buffer.Add(data[i]);
                 }
             }
+
             return messages;
         }
 

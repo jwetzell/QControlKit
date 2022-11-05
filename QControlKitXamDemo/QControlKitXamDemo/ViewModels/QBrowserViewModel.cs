@@ -13,11 +13,15 @@ namespace QControlKitXamDemo.ViewModels
 {
     public class QBrowserViewModel : INotifyPropertyChanged
     {
+        private ILogger _log = Log.Logger.ForContext<QBrowserViewModel>();
+
         QBrowser browser;
 
         public event PropertyChangedEventHandler PropertyChanged;
         public bool autoUpdate = false;
         public ObservableCollection<QServerViewModel> ServersGrouped { get; set; }
+
+        bool connected = false;
         public QBrowserViewModel(QBrowser browser)
         {
             this.browser = browser;
@@ -31,9 +35,10 @@ namespace QControlKitXamDemo.ViewModels
                 {
                     if (autoUpdate)
                     {
+                        _log.Verbose($"Auto Update is enabled running probe");
                         Device.BeginInvokeOnMainThread(() =>
                         {
-                            Log.Debug("[QBrowserViewModel] QBrowser probe triggered");
+                            _log.Debug("QBrowser probe triggered");
                             this.browser.ProbeForQLabInstances();
                         });
                     }
@@ -47,7 +52,7 @@ namespace QControlKitXamDemo.ViewModels
         {
             Device.BeginInvokeOnMainThread(() =>
             {
-                Log.Debug($"[QBrowserViewModel] adding server: {args.server.description}");
+                _log.Debug($"adding server: {args.server.description}");
                 ServersGrouped.Add(new QServerViewModel(args.server));
             });
         }
@@ -70,7 +75,7 @@ namespace QControlKitXamDemo.ViewModels
             {
                 Device.BeginInvokeOnMainThread(() =>
                 {
-                    Log.Debug($"[QBrowserViewModel] removing server: {args.server.description}");
+                    _log.Debug($"removing server: {args.server.description}");
                     ServersGrouped.Remove(serverToRemove);
                 });
             }
@@ -85,7 +90,7 @@ namespace QControlKitXamDemo.ViewModels
         {
             if (!autoUpdate)
             {
-                Log.Debug("[QBrowserViewModel] Manual Scan Initiated");
+                _log.Debug("Manual Scan Initiated");
                 browser.ProbeForQLabInstances();
             }
         }

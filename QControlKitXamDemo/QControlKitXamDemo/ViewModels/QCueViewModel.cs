@@ -11,6 +11,8 @@ namespace QControlKitXamDemo.ViewModels
 {
     public class QCueViewModel : INotifyPropertyChanged
     {
+        private ILogger _log = Log.Logger.ForContext<QCueViewModel>();
+
         QCue cue;
         bool isSelected = false;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -18,16 +20,20 @@ namespace QControlKitXamDemo.ViewModels
         public QCueViewModel(QCue cue, bool checkPlayback)
         {
             this.cue = cue;
-            if(checkPlayback)
+            if (checkPlayback)
+            {
                 this.cue.workspace.CueListChangedPlaybackPosition += Workspace_CueListChangedPlaybackPosition;
+            }
             this.cue.CuePropertiesUpdated += OnCuePropertiesUpdated;
         }
 
         private void OnCuePropertiesUpdated(object source, QCuePropertiesUpdatedArgs args)
         {
-            foreach(var property in args.properties)
+            _log.Debug($"properties updated from cue");
+
+            foreach (var property in args.properties)
             {
-                Log.Debug($"[cueviewmodel] property <{property}> has been updated for cue {name}.");
+                _log.Debug($"property <{property}> has been updated for cue {name}.");
                 if (property.Equals(QOSCKey.Name) || property.Equals(QOSCKey.ListName))
                 {
                     OnPropertyChanged("name");

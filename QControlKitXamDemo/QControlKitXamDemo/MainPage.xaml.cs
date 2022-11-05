@@ -30,7 +30,7 @@ namespace QControlKitXamDemo
 
             qBrowserViewModel.autoUpdate = false;
             QWorkspace selectedWorkspace = (e.SelectedItem as QWorkspaceViewModel).workspace;
-            Log.Debug($"[demo] workspace: {selectedWorkspace.nameWithoutPathExtension} has been selected");
+            Log.Debug($"workspace: {selectedWorkspace.nameWithoutPathExtension} has been selected");
             ((ListView)sender).SelectedItem = null;
 
             if (selectedWorkspace.hasPasscode)

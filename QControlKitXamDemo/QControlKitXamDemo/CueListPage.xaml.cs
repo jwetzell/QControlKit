@@ -7,6 +7,7 @@ using Xamarin.Forms;
 
 using QControlKit.Events;
 using QControlKit.Constants;
+using Serilog;
 
 namespace QControlKitXamDemo
 {
@@ -64,6 +65,18 @@ namespace QControlKitXamDemo
             });
         }
 
+        void updateCuePropertes(QCue cue)
+        {
+            cue.workspace.fetchDefaultPropertiesForCue(cue);
+            if (cue.cues.Count > 0)
+            {
+                foreach (QCue childCue in cue.cues)
+                {
+                    childCue.workspace.fetchDefaultPropertiesForCue(childCue);
+                }
+            }
+        }
+
         void Workspace_WorkspaceUpdated(object source, QWorkspaceUpdatedArgs args)
         {
             if(connectedWorkspace.cueLists.Count > 0)
@@ -71,6 +84,7 @@ namespace QControlKitXamDemo
                 List<Task> cueAddTasks = new List<Task>();
                 foreach(var aCue in connectedWorkspace.cueLists)
                 {
+                    updateCuePropertes(aCue);
                     Grid cueGrid = cueToGrid(aCue);
                     cueGridDict.Add(aCue.uid, cueGrid);
                     MainThread.InvokeOnMainThreadAsync(() =>
@@ -95,7 +109,7 @@ namespace QControlKitXamDemo
                 HorizontalOptions = LayoutOptions.StartAndExpand,
                 VerticalTextAlignment = TextAlignment.Center,
             };
-            cueLabel.SetBinding(Label.TextProperty, "status", BindingMode.OneWay);
+            cueLabel.SetBinding(Label.TextProperty, "name", BindingMode.OneWay);
             var cueBackground = new Frame
             {
                 BindingContext = qCueViewModel,

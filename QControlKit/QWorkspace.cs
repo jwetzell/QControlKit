@@ -10,6 +10,7 @@ namespace QControlKit
 {
     public class QWorkspace: IEquatable<QWorkspace>
     {
+        private ILogger _log = Log.Logger.ForContext<QWorkspace>();
 
         private QServer server;
         private QClient client;
@@ -64,7 +65,7 @@ namespace QControlKit
 
             updateWithWorkspaceInfo(workspaceInfo);
 
-            client = new QClient(server.host, server.port);
+            client = server.client;
             
             client.WorkspaceConnected += OnWorkspaceConnected;
             client.WorkspaceConnectionError += OnWorkspaceConnectionError;
@@ -75,7 +76,7 @@ namespace QControlKit
             client.CueUpdated += OnCueUpdated;
 
             this.server = server;
-            Log.Debug($"[workspace] <{name}> on <{server.name}> initialized.");
+            _log.Debug($"<{name}> on <{server.name}> initialized.");
         }
 
         //updateWithDictionary
@@ -164,18 +165,18 @@ namespace QControlKit
 
         public void connect(string passcode = null)
         {
-            Log.Information($"[workspace] connecting to <{name}> @ {this.server.host}:{this.server.port}");
+            _log.Information($"connecting to <{name}> @ {this.server.host}:{this.server.port}");
 
             if(hasPasscode && passcode == null)
             {
-                Log.Error($"[workspace] *** workspace <{name}> requires a passcode but none was supplied.");
+                _log.Error($"*** workspace <{name}> requires a passcode but none was supplied.");
                 OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.BadPass });
                 return;
             }
 
             if (!client.connect())
             {
-                Log.Error($"[workspace] *** couldn't connect to server client is not connected.");
+                _log.Error($"*** couldn't connect to server client is not connected.");
                 OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.Error });
                 return;
             }
@@ -210,7 +211,7 @@ namespace QControlKit
 
         public void disconnect()
         {
-            Log.Information($"[workspace] disconnecting from <{name}>");
+            _log.Information($"disconnecting from <{name}>");
             if (!connected)
                 return;
             stopReceivingUpdates();
@@ -417,11 +418,11 @@ namespace QControlKit
             {
                 //clear passcode if there was one set in the connect() method
                 this.passcode = null;
-                Log.Error($"[workspace] *** Password for workspace <{name}> was incorrect!");
+                _log.Error($"*** Password for workspace <{name}> was incorrect!");
             }
             else
             {
-                Log.Error($"[workspace] *** Unable to connect to workspace: <{name}> on server: <{server.name}>");
+                _log.Error($"*** Unable to connect to workspace: <{name}> on server: <{server.name}>");
             }
 
             WorkspaceConnectionError?.Invoke(this, new QWorkspaceConnectionErrorArgs { status = args.status });
@@ -429,7 +430,7 @@ namespace QControlKit
 
         private void OnWorkspaceConnected(object source, QWorkspaceConnectedArgs args)
         {
-            Log.Information($"[workspace] Connection to <{name}> successful, finishing things up.");
+            _log.Information($"Connection to <{name}> successful, finishing things up.");
             WorkspaceConnected?.Invoke(this, new QWorkspaceConnectedArgs());
             finishConnection();
         }
@@ -437,7 +438,7 @@ namespace QControlKit
         private void OnWorkspaceDisconnected(object source, QWorkspaceDisconnectedArgs args)
         {
             //this might not be called with TCP?
-            Log.Warning($"[workspace] *** Workspace has indicated it is disconnecting");
+            _log.Warning($"*** Workspace has indicated it is disconnecting");
             WorkspaceDisconnected?.Invoke(this, new QWorkspaceDisconnectedArgs());
         }
 
@@ -506,7 +507,7 @@ namespace QControlKit
                 //add Event handled? use CueUpdated one?
             }
 
-            Log.Debug($"[workspace] cueLists finished processing. root updated? {rootCueUpdated}");
+            _log.Debug($"cueLists finished processing. root updated? {rootCueUpdated}");
 
 
             OnWorkspaceUpdated();
@@ -524,7 +525,7 @@ namespace QControlKit
                 cueList.setProperty(args.cueID, QOSCKey.PlaybackPositionId, false);
             }
 
-            Log.Information($"[workspace] cue list <{args.cueListID}> playback position changed to <{args.cueID}>");
+            _log.Information($"cue list <{args.cueListID}> playback position changed to <{args.cueID}>");
             CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = args.cueListID, cueID = args.cueID });
 
         }
@@ -538,7 +539,7 @@ namespace QControlKit
         {
             if (args.cueID.Equals(QIdentifiers.RootCueUpdate))
             {
-                Log.Debug("[workspace] root cue update requested, updating all cue lists");
+                _log.Debug("root cue update requested, updating all cue lists");
                 foreach (var cuelist in this.cueLists)
                 {
                     if (!cuelist.uid.Equals(QIdentifiers.ActiveCues))
@@ -560,10 +561,21 @@ namespace QControlKit
 
         private void OnCueUpdated(object source, QCueUpdatedArgs args)
         {
+            _log.Verbose($"OnCueUpdated: {args.cueID}");
             QCue cue = cueWithID(args.cueID);
 
-            if (cue == null || cue.ignoreUpdates)
+
+            if(cue == null)
+            {
+                _log.Error($"Could not find cue to update, this is likely a problem.");
                 return;
+            }
+
+            if (cue.ignoreUpdates)
+            {
+                _log.Verbose($"Skipping updatePropertiesWithDictionary for cue: {args.cueID} because of ignoreUpdates setting");
+                return;
+            }
 
             cue.updatePropertiesWithDictionary(args.data);
         }
@@ -578,7 +590,7 @@ namespace QControlKit
         #region Printing
         public void Print()
         {
-            Log.Information($"[workspace] {name}");
+            _log.Information($"{name}");
             foreach (var cueList in root.cues)
             {
                 cueList.Print();

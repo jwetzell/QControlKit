@@ -10,11 +10,13 @@ namespace QControlKit
 {
     public class QServer
     {
+        private ILogger _log = Log.Logger.ForContext<QServer>();
+
         public event QServerUpdatedHandler ServerUpdated;
         public event QServerWorkspaceAddedHandler WorkspaceAdded;
         public event QServerWorkspaceRemovedHandler WorkspaceRemoved;
 
-        private QClient client;
+        private QClient _client;
 
         public string host { get; set; }
         public int port { get; set; }
@@ -28,18 +30,21 @@ namespace QControlKit
             this.host = host;
             this.port = port;
 
-            client = new QClient(host, port);
+            _client = new QClient(host, port);
             client.WorkspacesUpdated += OnServerWorkspacesUpdated;
 
             if (!client.connect())
             {
-                Log.Error($"[server] unable to connect to QLab Server: {host}:{port}");
+                _log.Error($"unable to connect to QLab Server: {host}:{port}");
             }
         }
 
         public string description { get { return $"{name} - {host} - {port}"; } }
 
-        
+        public QClient client {
+            get { return _client; }
+        }
+
         public void refreshWorkspaces()
         {
             client.sendMessage("/workspaces");
@@ -111,12 +116,12 @@ namespace QControlKit
 
         public void disconnect()
         {
-            Log.Information($"[server] disconnect requested for server <{name}>");
+            _log.Information($"disconnect requested for server <{name}>");
             foreach (var workspace in workspaces)
             {
                 if (workspace.connected)
                 {
-                    Log.Debug($"[server] Closing workspace <{workspace.name}> still connected to {name}");
+                    _log.Debug($"Closing workspace <{workspace.name}> still connected to {name}");
                     workspace.disconnect();
                 }
             }

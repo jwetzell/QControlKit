@@ -12,6 +12,8 @@ namespace QControlKit
 {
     public class QClient
     {
+        private ILogger _log = Log.Logger.ForContext<QClient>();
+
         TCPClient tcpClient;
 
         public event QWorkspacesUpdatedHandler WorkspacesUpdated;
@@ -35,7 +37,7 @@ namespace QControlKit
         public QClient(string host, int port)
         {
             tcpClient = new TCPClient(host, port);
-            Log.Debug($"[client] setup connection to: <{host}:{port}>");
+            _log.Debug($"setup connection to: <{host}:{port}>");
             tcpClient.MessageReceived += ProcessMessage;
         }
 
@@ -52,15 +54,15 @@ namespace QControlKit
 
         public void disconnect()
         {
-            Log.Information($"[client] disconnecting from {tcpClient.Address}");
+            _log.Information($"disconnecting from {tcpClient.Address}");
             tcpClient.Close();
         }
 
 
         public void sendMessage(string address, params object[] args)
         {
-            tcpClient.QueueForSending(new OscMessage(address, args));
-            Log.Information($"[client] send message {address} : {args}");
+            tcpClient.Send(new OscMessage(address, args));
+            _log.Debug($"send message {address} : {args}");
         }
 
         private void ProcessMessage(object source, MessageEventArgs args)
@@ -87,20 +89,19 @@ namespace QControlKit
                         string property = message.AddressParts.Last();
                         if (property == null)
                             return;
-                        if (property == QOSCKey.PlaybackPositionId)
-                        {
-                            OnCueListChangedPlaybackPosition(message.cueID, data.ToString());
-                            return;
-                        }
                         //create object manually since single value replies don't have dictionaries
                         JObject properties = new JObject();
                         properties.Add(property, data);
 
                         OnCueUpdated(message.cueID, properties);
+                        if (property == QOSCKey.PlaybackPositionId)
+                        {
+                            OnCueListChangedPlaybackPosition(message.cueID, data.ToString());
+                        }
                     }
                     else
                     {
-                        Log.Error($"[client] unhandled reply from cue: Type: {data.Type} value: {message.response}");
+                        _log.Error($"unhandled reply from cue: Type: {data.Type} value: {message.response}");
                     }
 
                 }
@@ -114,14 +115,14 @@ namespace QControlKit
                 }
                 else if (message.IsConnect)
                 {
-                    if (message.response.ToString() == "ok")
+                    if (message.response.ToString().Contains("ok"))
                         OnWorkspaceConnected();
                     else
                         OnWorkspaceConnectionError(message.response.ToString());
                 }
                 else
                 {
-                    Log.Error($"[client] unhandled reply message: {message.address}");
+                    _log.Error($"unhandled reply message: {message.address}");
                 }
             }
             else if(message.IsUpdate) {
@@ -153,7 +154,6 @@ namespace QControlKit
                 else if ( message.IsPreferencesUpdate)
                 {
                     //need to do checks for 4.2 or newer
-
                     string key = message.AddressParts.Last();
                     if (key == null)
                         return;
@@ -165,65 +165,65 @@ namespace QControlKit
                 }
                 else
                 {
-                    Log.Error($"[client] unhandled update message: {message.address}");
+                    _log.Error($"unhandled update message: {message.address}");
                 }
             }
             else
             {
-                Log.Error($"[client] unhandled message: {message.address}");
+                _log.Error($"unhandled message: {message.address}");
             }
         }
 
         protected virtual void OnCueUpdated(string cueID, JToken properties)
         {
-            Log.Debug($"[client] cue updated: {cueID}");
+            _log.Debug($"cue updated: {cueID}");
             CueUpdated?.Invoke(this, new QCueUpdatedArgs { cueID = cueID, data = properties });
         }
         protected virtual void OnCueNeedsUpdated(string cueID)
         {
-            Log.Debug($"[client] cue needs updated: {cueID}");
+            _log.Debug($"cue needs updated: {cueID}");
             CueNeedsUpdated?.Invoke(this, new QCueNeedsUpdatedArgs { cueID = cueID });
         }
 
         protected virtual void OnCueListsUpdated(JToken response)
         {
-            Log.Debug($"[client] Cue Lists Updated");
+            _log.Debug($"Cue Lists Updated");
             CueListsUpdated?.Invoke(this, new QCueListsUpdatedArgs { data = response });
         }
 
         protected virtual void OnCueListChangedPlaybackPosition(string cueListID, string cueID)
         {
-            Log.Debug($"[client] CueList <{cueListID}> Playback Position Changed to <{cueID}>");
+            _log.Debug($"CueList <{cueListID}> Playback Position Changed to <{cueID}>");
             CueListChangedPlaybackPosition?.Invoke(this, new QCueListChangedPlaybackPositionArgs { cueListID = cueListID, cueID = cueID });
         }
 
         protected virtual void OnWorkspaceUpdated()
         {
-            //Log.Debug($"[client] Workspace Updated");
+            _log.Debug($"Workspace Updated");
             WorkspaceUpdated?.Invoke(this, new QWorkspaceUpdatedArgs());
         }
 
         protected virtual void OnWorkspaceSettingsUpdated(string settingsType)
         {
-            Log.Debug($"[client] Workspace Settings Updated");
+            _log.Debug($"Workspace Settings Updated");
             WorkspaceSettingsUpdated?.Invoke(this, new QWorkspaceSettingsUpdatedArgs { settingsType = settingsType });
         }
 
         protected virtual void OnWorkspaceLightDashboardUpdated()
         {
-            Log.Debug($"[client] Workspace Light Dashboard Updated");
+            _log.Debug($"Workspace Light Dashboard Updated");
             WorkspaceLightDashboardUpdated?.Invoke(this, new QWorkspaceLightDashboardUpdatedArgs());
         }
 
         protected virtual void OnQLabPreferencesUpdated(string key)
         {
-            Log.Debug($"[client] QLab Preferences Updated");
+            _log.Debug($"QLab Preferences Updated");
             QLabPreferencesUpdated?.Invoke(this, new QQLabPreferencesUpdatedArgs { key = key });
         }
 
         protected virtual void OnWorkspaceDisconnected()
         {
-            Log.Debug($"[client] Workspace Disconnected");
+            _log.Debug($"Workspace Disconnected");
             WorkspaceDisconnected?.Invoke(this, new QWorkspaceDisconnectedArgs());
         }
 

@@ -12,6 +12,7 @@ namespace QControlKit
 {
     public class QCue : IComparable
     {
+        private ILogger _log = Log.Logger.ForContext<QCue>();
 
         public QWorkspace workspace;
         public Dictionary<string, object> cueData;
@@ -162,7 +163,7 @@ namespace QControlKit
 
                 QCue cue = childCuesUIDMap[aUid];
 
-                //Log.Debug($"Removing Child Cue From {listName} : {cue.uid} + {cue.listName}");
+                //_log.Debug($"Removing Child Cue From {listName} : {cue.uid} + {cue.listName}");
                 childCues.Remove(cue);
                 childCuesUIDMap.Remove(aUid);
             }
@@ -639,6 +640,8 @@ namespace QControlKit
         {
             bool cueUpdated = false;
 
+            _log.Verbose($"updatePropertiesWithDictionary() Called for cue");
+
             //TODO: pretty sure this is done
             JObject dictObj = (JObject)dict;
             List<string> propertiesUpdated = new List<string>();
@@ -647,14 +650,14 @@ namespace QControlKit
                 JToken value = obj.Value;
                 if (obj.Key.Equals(QOSCKey.Cues))
                 {
-                    //Log.Debug($"Cues OSC Key found in update message...updating child cues");
+                    //_log.Debug($"Cues OSC Key found in update message...updating child cues");
                     if (value.Type != JTokenType.Array)
                         continue;
                     updateChildCuesWithPropertiesArray(value, false);
                 }
                 else if(obj.Key.Equals(QOSCKey.Children) && IsGroup)
                 {
-                    //Log.Debug($"Children OSC Key found in update message for {uid} ...updating child and removing deleted ones.");
+                    //_log.Debug($"Children OSC Key found in update message for {uid} ...updating child and removing deleted ones.");
                     if (value.Type != JTokenType.Array)
                         continue;
                     updateChildCuesWithPropertiesArray(value, true);
@@ -668,7 +671,7 @@ namespace QControlKit
                     {
                         cueUpdated = true;
                         propertiesUpdated.Add(obj.Key);
-                        //Log.Debug($"[cue] cue property {obj.Key} updated with {obj.Value}");
+                        //_log.Debug($"cue property {obj.Key} updated with {obj.Value}");
                     }
                 }
             }
@@ -803,7 +806,7 @@ namespace QControlKit
             if (propertyForKey(key) != null)
             {
                 object prop = propertyForKey(key);
-                //Log.Warning($"{listName} IsBroken: {propertyForKey(QOSCKey.IsBroken).ToString()} {prop.GetType().ToString()}");
+                //_log.Warning($"{listName} IsBroken: {propertyForKey(QOSCKey.IsBroken).ToString()} {prop.GetType().ToString()}");
                 if(prop.GetType() == typeof(Boolean)){
                     return (bool)prop;
                 }
@@ -893,7 +896,7 @@ namespace QControlKit
             }
             else if (key.Equals(QOSCKey.Children))
             {
-                Log.Debug($"Children Cues property updated for: {this.displayName} : {this.uid}");
+                _log.Debug($"Children Cues property updated for: {this.displayName} : {this.uid}");
             }
             else if(key.Equals(QOSCKey.PlaybackPositionId))
             {
@@ -992,9 +995,18 @@ namespace QControlKit
         #region Event Handling
         void OnCuePropertiesUpdated(List<string> properties)
         {
+            _log.Verbose("OnCuePropertiesUpdated");
             if(parentID != null && parentID != "")
             {
-                workspace.fetchBasicPropertiesForCue(workspace.cueWithID(parentID));
+                QCue parentCue = workspace.cueWithID(parentID);
+                if(parentCue != null)
+                {
+                    workspace.fetchBasicPropertiesForCue(workspace.cueWithID(parentID));
+                }
+                else
+                {
+                    _log.Verbose($"parent cue with id: {parentID} can't be found this could be a problem");
+                }
             }
             CuePropertiesUpdated?.Invoke(this, new QCuePropertiesUpdatedArgs { properties = properties });
         } 
@@ -1011,7 +1023,7 @@ namespace QControlKit
         {
             string indent = new string(' ', level*2);
 
-            Log.Information($"{indent}\u00b7{displayName} - {uid}");
+            _log.Information($"{indent}\u00b7{displayName} - {uid}");
             if (IsGroup)
             {
                 level++;

@@ -13,6 +13,8 @@ namespace QControlKit
 {
     public class QBrowser
     {
+        private ILogger _log = Log.Logger.ForContext<QBrowser>();
+
         public ObservableCollection<QServer> servers = new ObservableCollection<QServer>();
 
         public event QServerFoundHandler ServerFound;
@@ -26,17 +28,17 @@ namespace QControlKit
 
         public async void ProbeForQLabInstances()
         {
-            Log.Debug("[qbrowser] probing for instances");
+            _log.Debug("probing for instances");
 
             IReadOnlyList<IZeroconfHost> results = await
                     ZeroconfResolver.ResolveAsync(QBonjour.TCPService,TimeSpan.FromSeconds(3));
 
             foreach (var zeroconfHost in results)
             {
-                Log.Debug($"[qbrowser] found host {zeroconfHost.IPAddress}:{zeroconfHost.DisplayName}");
+                _log.Debug($"found host {zeroconfHost.IPAddress}:{zeroconfHost.DisplayName}");
                 foreach (var service in zeroconfHost.Services)
                 {
-                    Log.Debug($"[qbrowser] found {service.Key}:{service.Value}");
+                    _log.Debug($"found {service.Key}:{service.Value}");
                     if (service.Key.Equals(QBonjour.TCPService))
                     {
 
@@ -44,7 +46,7 @@ namespace QControlKit
 
                         if (server == null)
                         {
-                            Log.Information($"[qbrowser] Found {zeroconfHost.DisplayName} : {zeroconfHost.IPAddress} : {service.Value.Port}");
+                            _log.Information($"Found {zeroconfHost.DisplayName} : {zeroconfHost.IPAddress} : {service.Value.Port}");
                             QServer serverToAdd = new QServer(zeroconfHost.IPAddress, service.Value.Port);
                             serverToAdd.name = zeroconfHost.DisplayName;
                             serverToAdd.zeroconfHost = zeroconfHost;
@@ -70,9 +72,9 @@ namespace QControlKit
 
                 if (found == null)
                 {
-                    Log.Information($"[qbrowser] Lost {server.name} : {server.host} : {server.port} disconnecting");
+                    _log.Information($"Lost {server.name} : {server.host} : {server.port} disconnecting");
                     server.disconnect();
-                    Log.Verbose($"[qbrowser] after server disconnect()");
+                    _log.Verbose($"after server disconnect()");
                     servers.Remove(server);
                     OnServerLost(server);
                 }
@@ -122,7 +124,7 @@ namespace QControlKit
 
         public void Close()
         {
-            Log.Information($"[qbrowser] Close requested");
+            _log.Information($"Close requested");
             foreach (var server in servers)
             {
                 server.disconnect();

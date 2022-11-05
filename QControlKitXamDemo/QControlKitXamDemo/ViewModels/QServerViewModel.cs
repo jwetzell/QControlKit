@@ -5,11 +5,14 @@ using Xamarin.Forms;
 
 using QControlKit;
 using QControlKit.Events;
+using Serilog;
 
 namespace QControlKitXamDemo.ViewModels
 {
     public class QServerViewModel : ObservableCollection<QWorkspaceViewModel>, INotifyPropertyChanged
     {
+        private ILogger _log = Log.Logger.ForContext<QServerViewModel>();
+
         QServer server;
         public new event PropertyChangedEventHandler PropertyChanged;
         public string name

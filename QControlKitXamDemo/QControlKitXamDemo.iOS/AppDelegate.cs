@@ -5,6 +5,8 @@ using System.Linq;
 using Foundation;
 using UIKit;
 using Serilog;
+using Serilog.Events;
+
 namespace QControlKitXamDemo.iOS
 {
     // The UIApplicationDelegate for the application. This class is responsible for launching the 
@@ -23,7 +25,7 @@ namespace QControlKitXamDemo.iOS
         public override bool FinishedLaunching(UIApplication app, NSDictionary options)
         {
             global::Xamarin.Forms.Forms.Init();
-            Log.Logger = new LoggerConfiguration().WriteTo.NSLog().MinimumLevel.Verbose().CreateLogger();
+            Log.Logger = new LoggerConfiguration().WriteTo.NSLog(outputTemplate: "[{Level}] ({SourceContext}) {Message}{NewLine}{Exception}").MinimumLevel.Verbose().CreateLogger();
             LoadApplication(new App());
 
             return base.FinishedLaunching(app, options);
