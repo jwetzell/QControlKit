@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using Newtonsoft.Json.Linq;
 using SharpOSC;
 
@@ -28,7 +29,32 @@ namespace QControlKit
         public bool IsReply { get { return OSCMessage.Address.StartsWith("/reply"); } }
 
         // /reply/cue_id/1/action
-        public bool IsReplyFromCue { get{ return OSCMessage.Address.StartsWith("/reply/cue_id"); } }
+        public bool IsReplyFromCue {
+            get {
+                if (!IsReply)
+                {
+                    return false;
+                }
+                //return OSCMessage.Address.StartsWith("/reply/cue_id");
+                if (AddressParts.Length > 5)
+                {
+                    // /reply/workspace/*/cue_id/*/*
+                    if (AddressParts[1].Equals("workspace") && AddressParts[3].Equals("cue_id")){
+                        return true;
+                    }
+                }
+
+                if(AddressParts.Length > 2)
+                {
+                    // /reply/cue_id/*/*
+                    if (AddressParts[1].Equals("cue_id"))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
         public bool IsReplyFromCueLists { get { return IsReply && OSCMessage.Address.EndsWith("cueLists"); } }
 
         public bool IsUpdate { get{ return OSCMessage.Address.StartsWith("/update"); } }
@@ -136,6 +162,13 @@ namespace QControlKit
                     //TODO: check string cast
                     return arguments.Count > 0 ? (string)arguments[0] : null;
                 } else if (IsReplyFromCue) {
+
+                    // /reply/workspace/*/cue_id/*/*
+                    if (AddressParts.Length > 5)
+                    {
+                        return AddressParts[4];
+                    }
+                    // /reply/cue_id/*/*
                     return AddressParts[2];
                 } else {
                     return null;
