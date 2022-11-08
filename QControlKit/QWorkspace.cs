@@ -160,6 +160,8 @@ namespace QControlKit
 
         public string[] versionParts { get { return version.Split('.'); } }
         public bool connectedToQLab3 { get { return versionParts[0] == "3"; } }
+        public bool connectedToQLab4 { get { return versionParts[0] == "4"; } }
+        public bool connectedToQLab5 { get { return versionParts[0] == "5"; } }
 
         #region Connection/reconnection
 
@@ -170,14 +172,14 @@ namespace QControlKit
             if(hasPasscode && passcode == null)
             {
                 _log.Error($"*** workspace <{name}> requires a passcode but none was supplied.");
-                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.BadPass });
+                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.BadPass, data = "badpass" });
                 return;
             }
 
             if (!client.connect())
             {
                 _log.Error($"*** couldn't connect to server client is not connected.");
-                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.Error });
+                OnWorkspaceConnectionError(this, new QWorkspaceConnectionErrorArgs { status = QConnectionStatus.Error, data = "error" });
                 return;
             }
 
@@ -425,13 +427,13 @@ namespace QControlKit
                 _log.Error($"*** Unable to connect to workspace: <{name}> on server: <{server.name}>");
             }
 
-            WorkspaceConnectionError?.Invoke(this, new QWorkspaceConnectionErrorArgs { status = args.status });
+            WorkspaceConnectionError?.Invoke(this, args);
         }
 
         private void OnWorkspaceConnected(object source, QWorkspaceConnectedArgs args)
         {
             _log.Information($"Connection to <{name}> successful, finishing things up.");
-            WorkspaceConnected?.Invoke(this, new QWorkspaceConnectedArgs());
+            WorkspaceConnected?.Invoke(this, args);
             finishConnection();
         }
 

@@ -75,7 +75,7 @@ namespace QControlKit
 
             if (message.IsReply)
             {
-                JToken data = message.response;
+                JToken data = message.data;
 
                 //special case, want to update cue properties
                 if (message.IsReplyFromCue)
@@ -101,13 +101,13 @@ namespace QControlKit
                     }
                     else
                     {
-                        _log.Error($"unhandled reply from cue: Type: {data.Type} value: {message.response}");
+                        _log.Error($"unhandled reply from cue: Type: {data.Type} value: {message.data}");
                     }
 
                 }
                 else if (message.IsReplyFromCueLists)
                 {
-                    OnCueListsUpdated(message.response);
+                    OnCueListsUpdated(message.data);
                 }
                 else if (message.IsWorkspacesInfo)
                 {
@@ -115,10 +115,12 @@ namespace QControlKit
                 }
                 else if (message.IsConnect)
                 {
-                    if (message.response.ToString().Contains("ok"))
-                        OnWorkspaceConnected();
+                    _log.Verbose(message.data.ToString());
+                    _log.Verbose("Status:" + message.status.ToString());
+                    if (message.status.ToString().Equals("ok"))
+                        OnWorkspaceConnected(message.status.ToString(),message.data.ToString());
                     else
-                        OnWorkspaceConnectionError(message.response.ToString());
+                        OnWorkspaceConnectionError(message.status.ToString(), message.data.ToString());
                 }
                 else
                 {
@@ -227,14 +229,14 @@ namespace QControlKit
             WorkspaceDisconnected?.Invoke(this, new QWorkspaceDisconnectedArgs());
         }
 
-        protected virtual void OnWorkspaceConnected()
+        protected virtual void OnWorkspaceConnected(string status, string data)
         {
-            WorkspaceConnected?.Invoke(this, new QWorkspaceConnectedArgs());
+            WorkspaceConnected?.Invoke(this, new QWorkspaceConnectedArgs { status = status, data = data });
         }
 
-        protected virtual void OnWorkspaceConnectionError(string status)
+        protected virtual void OnWorkspaceConnectionError(string status, string data)
         {
-            WorkspaceConnectionError?.Invoke(this, new QWorkspaceConnectionErrorArgs { status = status });
+            WorkspaceConnectionError?.Invoke(this, new QWorkspaceConnectionErrorArgs { status = status, data = data });
         }
 
         protected virtual void OnWorkspacesUpdated(QMessage message)
@@ -242,7 +244,7 @@ namespace QControlKit
             if(WorkspacesUpdated != null)
             {
                 List<QWorkspaceInfo> workspaces = new List<QWorkspaceInfo>();
-                foreach (var item in message.response)
+                foreach (var item in message.data)
                 {
                     QWorkspaceInfo workspacefound = JsonConvert.DeserializeObject<QWorkspaceInfo>(item.ToString());
                     workspaces.Add(workspacefound);

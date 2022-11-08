@@ -289,6 +289,17 @@
         public const string Error = "error";
     }
 
+    public static class QConnectionRole
+    {
+        public const string View = "view";
+        public const string ViewEdit = "view|edit";
+        public const string ViewEditControl = "view|edit|control";
+        public const string ViewControl = "view|control";
+        public const string EditControl = "edit|control";
+        public const string Edit = "edit";
+        public const string Control = "control";
+    }
+
     public static class QColorName
     {
         public const string Red = "red";

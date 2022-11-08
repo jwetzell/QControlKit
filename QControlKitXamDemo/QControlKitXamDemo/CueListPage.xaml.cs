@@ -21,10 +21,13 @@ namespace QControlKitXamDemo
             connectedWorkspace = workspace;
             connectedWorkspace.WorkspaceUpdated += Workspace_WorkspaceUpdated;
             connectedWorkspace.WorkspaceConnectionError += ConnectedWorkspace_WorkspaceConnectionError;
+            connectedWorkspace.WorkspaceConnected += ConnectedWorkspace_WorkspaceConnected; ;
             connectedWorkspace.connect(passcode);
             connectedWorkspace.defaultSendUpdatesOSC = true;
             connectedWorkspace.CueListChangedPlaybackPosition += ConnectedWorkspace_CueListChangedPlaybackPosition;
         }
+
+        
 
         protected override void OnDisappearing()
         {
@@ -32,14 +35,30 @@ namespace QControlKitXamDemo
             connectedWorkspace.disconnect();
             connectedWorkspace.WorkspaceUpdated -= Workspace_WorkspaceUpdated;
             connectedWorkspace.WorkspaceConnectionError -= ConnectedWorkspace_WorkspaceConnectionError;
+            connectedWorkspace.WorkspaceConnected -= ConnectedWorkspace_WorkspaceConnected;
             connectedWorkspace.CueListChangedPlaybackPosition -= ConnectedWorkspace_CueListChangedPlaybackPosition;
+        }
+
+        private async void ConnectedWorkspace_WorkspaceConnected(object source, QWorkspaceConnectedArgs args)
+        {
+            if (args.status.Equals("ok") && connectedWorkspace.connectedToQLab5)
+            {
+                if (!args.data.Contains(QConnectionRole.View))
+                {
+                    string passcode = await DisplayPromptAsync("PIN does not have view permissions.", "Try Again", maxLength: 4, keyboard: Keyboard.Numeric);
+                    if (passcode != null)
+                    {
+                        connectedWorkspace.connect(passcode);
+                    }
+                }
+            }
         }
 
         private async void ConnectedWorkspace_WorkspaceConnectionError(object source, QWorkspaceConnectionErrorArgs args)
         {
             if (args.status.Equals("badpass"))
             {
-                string passcode = await DisplayPromptAsync("Passcode was incorrect.", "Try Again", maxLength: 4, keyboard: Keyboard.Numeric);
+                string passcode = await DisplayPromptAsync("PIN is incorrect.", "Try Again", maxLength: 4, keyboard: Keyboard.Numeric);
                 if (passcode != null)
                 {
                     connectedWorkspace.connect(passcode);

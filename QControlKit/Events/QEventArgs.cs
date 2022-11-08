@@ -48,7 +48,8 @@ namespace QControlKit.Events
 
     public class QWorkspaceConnectedArgs : EventArgs
     {
-
+        public string status { get; set; }
+        public string data { get; set; }
     }
 
     public class QWorkspaceDisconnectedArgs : EventArgs
@@ -59,6 +60,7 @@ namespace QControlKit.Events
     public class QWorkspaceConnectionErrorArgs : EventArgs
     {
         public string status { get; set; }
+        public string data { get; set; }
     }
     public class QQLabPreferencesUpdatedArgs : EventArgs
     {

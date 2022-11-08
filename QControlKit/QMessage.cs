@@ -141,12 +141,25 @@ namespace QControlKit
 
         public string[] AddressParts { get { return address.Split(new char[] { '/' },StringSplitOptions.RemoveEmptyEntries); } }
 
-        public JToken response
+        public JToken data
         {
             get
             {
-                JObject responseObj = JObject.Parse((string)arguments[0]);
-                return responseObj["data"];
+                JObject dataObj = JObject.Parse((string)arguments[0]);
+                return dataObj["data"];
+            }
+        }
+
+        public JToken status
+        {
+            get
+            {
+                if (arguments != null && arguments.Count > 0)
+                {
+                    JObject statusObj = JObject.Parse((string)arguments[0]);
+                    return statusObj["status"];
+                }
+                return null;
             }
         }
 
