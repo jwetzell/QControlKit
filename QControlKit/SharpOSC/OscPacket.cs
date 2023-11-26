@@ -26,8 +26,6 @@ namespace SharpOSC
 		private static OscMessage parseMessage(byte[] msg)
 		{
 			int index = 0;
-            //Log.Debug("Raw ASCII DATA: " + System.Text.Encoding.ASCII.GetString(msg));
-            //Log.Debug("Raw UTF-8 DATA: " + System.Text.Encoding.UTF8.GetString(msg));
 			string address = null;
 			char[] types = new char[0];
 			List<object> arguments = new List<object>();

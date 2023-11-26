@@ -62,16 +62,12 @@ namespace QControlKit
         public void sendMessage(string address, params object[] args)
         {
             tcpClient.Send(new OscMessage(address, args));
-            _log.Debug($"send message {address} : {args}");
         }
 
         private void ProcessMessage(object source, MessageEventArgs args)
         {
 
             QMessage message = new QMessage(args.Message);
-
-            Log.Verbose(message.ToString());
-
 
             if (message.IsReply)
             {
@@ -115,8 +111,6 @@ namespace QControlKit
                 }
                 else if (message.IsConnect)
                 {
-                    _log.Verbose(message.data.ToString());
-                    _log.Verbose("Status:" + message.status.ToString());
                     if (message.status.ToString().Equals("ok"))
                         OnWorkspaceConnected(message.status.ToString(),message.data.ToString());
                     else
@@ -189,7 +183,7 @@ namespace QControlKit
 
         protected virtual void OnCueListsUpdated(JToken response)
         {
-            _log.Debug($"Cue Lists Updated");
+            _log.Debug("Cue Lists Updated");
             CueListsUpdated?.Invoke(this, new QCueListsUpdatedArgs { data = response });
         }
 
@@ -213,19 +207,19 @@ namespace QControlKit
 
         protected virtual void OnWorkspaceLightDashboardUpdated()
         {
-            _log.Debug($"Workspace Light Dashboard Updated");
+            _log.Debug("Workspace Light Dashboard Updated");
             WorkspaceLightDashboardUpdated?.Invoke(this, new QWorkspaceLightDashboardUpdatedArgs());
         }
 
         protected virtual void OnQLabPreferencesUpdated(string key)
         {
-            _log.Debug($"QLab Preferences Updated");
+            _log.Debug("QLab Preferences Updated");
             QLabPreferencesUpdated?.Invoke(this, new QQLabPreferencesUpdatedArgs { key = key });
         }
 
         protected virtual void OnWorkspaceDisconnected()
         {
-            _log.Debug($"Workspace Disconnected");
+            _log.Debug("Workspace Disconnected");
             WorkspaceDisconnected?.Invoke(this, new QWorkspaceDisconnectedArgs());
         }
 

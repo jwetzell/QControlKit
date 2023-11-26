@@ -163,7 +163,6 @@ namespace QControlKit
 
                 QCue cue = childCuesUIDMap[aUid];
 
-                //_log.Debug($"Removing Child Cue From {listName} : {cue.uid} + {cue.listName}");
                 childCues.Remove(cue);
                 childCuesUIDMap.Remove(aUid);
             }
@@ -640,8 +639,6 @@ namespace QControlKit
         {
             bool cueUpdated = false;
 
-            _log.Verbose($"updatePropertiesWithDictionary() Called for cue");
-
             //TODO: pretty sure this is done
             JObject dictObj = (JObject)dict;
             List<string> propertiesUpdated = new List<string>();
@@ -650,14 +647,12 @@ namespace QControlKit
                 JToken value = obj.Value;
                 if (obj.Key.Equals(QOSCKey.Cues))
                 {
-                    //_log.Debug($"Cues OSC Key found in update message...updating child cues");
                     if (value.Type != JTokenType.Array)
                         continue;
                     updateChildCuesWithPropertiesArray(value, false);
                 }
                 else if(obj.Key.Equals(QOSCKey.Children) && IsGroup)
                 {
-                    //_log.Debug($"Children OSC Key found in update message for {uid} ...updating child and removing deleted ones.");
                     if (value.Type != JTokenType.Array)
                         continue;
                     updateChildCuesWithPropertiesArray(value, true);
@@ -671,7 +666,6 @@ namespace QControlKit
                     {
                         cueUpdated = true;
                         propertiesUpdated.Add(obj.Key);
-                        //_log.Debug($"cue property {obj.Key} updated with {obj.Value}");
                     }
                 }
             }
@@ -1005,7 +999,7 @@ namespace QControlKit
                 }
                 else
                 {
-                    _log.Verbose($"parent cue with id: {parentID} can't be found this could be a problem");
+                    _log.Error($"parent cue with id: {parentID} can't be found this could be a problem");
                 }
             }
             CuePropertiesUpdated?.Invoke(this, new QCuePropertiesUpdatedArgs { properties = properties });

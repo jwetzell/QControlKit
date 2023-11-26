@@ -575,7 +575,6 @@ namespace QControlKit
 
             if (cue.ignoreUpdates)
             {
-                _log.Verbose($"Skipping updatePropertiesWithDictionary for cue: {args.cueID} because of ignoreUpdates setting");
                 return;
             }
 

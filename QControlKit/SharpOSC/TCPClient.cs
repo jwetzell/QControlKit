@@ -71,14 +71,9 @@ namespace SharpOSC
             _log.Error(e.Exception.ToString());
         }
 
-        private void TCPLog(string obj)
-        {
-            _log.Verbose($"{obj}");
-        }
-
         private void ClientDisconneted(object sender, OnClientDisconnectedEventArgs e)
         {
-            _log.Verbose($"client disconnected: {e.Reason}");
+            _log.Information($"client disconnected: {e.Reason}");
             Close();
         }
 
@@ -108,11 +103,7 @@ namespace SharpOSC
                         {
                             _log.Error("responeMessage is null");
                         }
-
-                        _log.Debug($"OSC Message Received: {responseMessage.Address}");
                         OnMessageReceived(responseMessage);
-                        _log.Debug($"After OnMessageReceived Event");
-
                     }
                     catch (Exception ex)
                     {

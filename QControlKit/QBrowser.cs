@@ -38,7 +38,6 @@ namespace QControlKit
                 _log.Debug($"found host {zeroconfHost.IPAddress}:{zeroconfHost.DisplayName}");
                 foreach (var service in zeroconfHost.Services)
                 {
-                    _log.Debug($"found {service.Key}:{service.Value}");
                     if (service.Key.Equals(QBonjour.TCPService))
                     {
 
