@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Net.Sockets;
-using System.Threading;
 using Serilog;
-using SuperSimpleTcp;
+using TcpSharp.Events;
 
 namespace SharpOSC
 {
@@ -37,9 +35,9 @@ namespace SharpOSC
 
         string _address;
 
-        SimpleTcpClient tcpClient;
+        TcpSharp.TcpSharpSocketClient tcpClient;
 
-
+        private List<byte> frameStream = new List<byte>();
 
         public TCPClient(string address, int port)
         {
@@ -52,11 +50,11 @@ namespace SharpOSC
 
             try
             {
-                tcpClient = new SimpleTcpClient(Address, Port);
-                tcpClient.Events.Connected += ClientConnected;
-                tcpClient.Events.DataReceived += DataReceived;
-                tcpClient.Events.Disconnected += ClientDisconneted;
-                tcpClient.Logger += TCPLog;
+                tcpClient = new TcpSharp.TcpSharpSocketClient(Address, Port);
+                tcpClient.OnConnected += ClientConnected;
+                tcpClient.OnDataReceived += DataReceived;
+                tcpClient.OnDisconnected += ClientDisconneted;
+                tcpClient.OnError += ClientError;
                 tcpClient.Connect();
                 return true;
             }
@@ -67,55 +65,65 @@ namespace SharpOSC
             }
 
         }
+        private void ClientError(object sender, OnClientErrorEventArgs e)
+        {
+            _log.Error("client error");
+            _log.Error(e.Exception.ToString());
+        }
 
         private void TCPLog(string obj)
         {
             _log.Verbose($"{obj}");
         }
 
-        private void ClientDisconneted(object sender, ConnectionEventArgs e)
+        private void ClientDisconneted(object sender, OnClientDisconnectedEventArgs e)
         {
-            _log.Verbose($"{e.IpPort} client disconnected: {e.Reason}");
+            _log.Verbose($"client disconnected: {e.Reason}");
             Close();
         }
 
-        private void DataReceived(object sender, DataReceivedEventArgs e)
+        private void DataReceived(object sender, OnClientDataReceivedEventArgs e)
         {
+            frameStream.AddRange(e.Data);
 
-            _log.Verbose($"Raw Data Received contents: {Encoding.UTF8.GetString(e.Data.Array, 0, e.Data.Count)}");
-            _log.Verbose($"Raw Data Received size: {e.Data.Count}");
-            List<byte[]> messages = SlipFrame.Decode(e.Data.Array);
-            _log.Verbose($"Slip decoded {messages.Count} osc messages");
-            foreach (var message in messages)
+            int i = 0;
+            int frameEnd = frameStream.FindIndex(1, frameByte=>frameByte.Equals(SlipFrame.END));
+            while(frameEnd > 0)
             {
-                _log.Verbose($"Raw message contents: {Encoding.UTF8.GetString(message, 0, message.Length)}");
-                try
-                {    
-                    OscPacket packet = OscPacket.GetPacket(message);
-                    OscMessage responseMessage = (OscMessage)packet;
-                    if (packet == null)
-                    {
-                        _log.Error("packet is null");
-                    }
-
-                    if (responseMessage == null)
-                    {
-                        _log.Error("responeMessage is null");
-                    }
-
-                    _log.Debug($"OSC Message Received: {responseMessage.Address}");
-                    OnMessageReceived(responseMessage);
-                    _log.Debug($"After OnMessageReceived Event");
-
-                }
-                catch (Exception ex)
+                List<byte> frame = frameStream.GetRange(0, frameEnd+1);
+                frameStream.RemoveRange(0, frameEnd + 1);
+                List<byte[]> messages = SlipFrame.Decode(frame.ToArray());
+                foreach (var message in messages)
                 {
-                    _log.Error($"Exception parsing OSC message: {ex.ToString()}");
+                    try
+                    {
+                        OscPacket packet = OscPacket.GetPacket(message);
+                        OscMessage responseMessage = (OscMessage)packet;
+                        if (packet == null)
+                        {
+                            _log.Error("packet is null");
+                        }
+
+                        if (responseMessage == null)
+                        {
+                            _log.Error("responeMessage is null");
+                        }
+
+                        _log.Debug($"OSC Message Received: {responseMessage.Address}");
+                        OnMessageReceived(responseMessage);
+                        _log.Debug($"After OnMessageReceived Event");
+
+                    }
+                    catch (Exception ex)
+                    {
+                        _log.Error($"Exception parsing OSC message: {ex.ToString()}");
+                    }
                 }
+                frameEnd = frameStream.FindIndex(0, frameByte => frameByte.Equals(SlipFrame.END));
             }
         }
 
-        private void ClientConnected(object sender, ConnectionEventArgs e)
+        private void ClientConnected(object sender, OnClientConnectedEventArgs e)
         {
             _log.Debug($"connected to <{Address}:{Port}>");
         }
@@ -123,7 +131,7 @@ namespace SharpOSC
         public void Send(byte[] message)
         {
             byte[] slipData = SlipFrame.Encode(message);
-            tcpClient.Send(slipData.ToArray());
+            tcpClient.SendBytes(slipData.ToArray());
         }
 
         public void Send(OscPacket packet)
@@ -139,7 +147,7 @@ namespace SharpOSC
                 if (tcpClient == null)
                     return false;
                 else
-                    return tcpClient.IsConnected;
+                    return tcpClient.Connected;
             }
         }
 
@@ -147,14 +155,13 @@ namespace SharpOSC
         {
             if (tcpClient != null)
             {
-                tcpClient.Events.Connected -= ClientConnected;
-                tcpClient.Events.DataReceived -= DataReceived;
-                tcpClient.Events.Disconnected -= ClientDisconneted;
-                if (tcpClient.IsConnected)
+                tcpClient.OnConnected -= ClientConnected;
+                tcpClient.OnDataReceived -= DataReceived;
+                tcpClient.OnDisconnected -= ClientDisconneted;
+                if (tcpClient.Connected)
                 {
                     _log.Debug($"closing connection to {Address}");
                     tcpClient.Disconnect();
-                    tcpClient.Dispose();
                 }
             }
         }
